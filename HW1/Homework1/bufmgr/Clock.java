@@ -1,10 +1,14 @@
 package bufmgr;
 
+import global.GlobalConst;
+import global.AbstractBufMgr;
+import global.AbstractBufMgrFrameDesc;
+import global.AbstractBufMgrReplacer;
+
 import exceptions.BufferPoolExceededException;
 import exceptions.InvalidFrameNumberException;
 import exceptions.PagePinnedException;
 import exceptions.PageUnpinnedException;
-import global.AbstractBufMgr;
 
 
 /**
@@ -14,14 +18,11 @@ public class Clock extends BufMgrReplacer
 {
 	public Clock() 
 	{
-		System.out.println("default ctor");
 		
 	};
 	
 	public Clock(AbstractBufMgr b) 
 	{
-		System.out.println("clock ctor");
-		System.out.println(b);
 		setBufferManager(b);
 	};
 	
@@ -36,9 +37,7 @@ public class Clock extends BufMgrReplacer
 	 * @return true if successful.
 	 */
 	public void pin(int frameNo) throws InvalidFrameNumberException
-	{
-		System.out.println("pin called");
-	};
+	{};
 
 	/**
 	 * Unpins a page in the buffer pool.

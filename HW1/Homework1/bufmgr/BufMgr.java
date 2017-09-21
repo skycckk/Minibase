@@ -78,7 +78,6 @@ public class BufMgr extends AbstractBufMgr
 	 */
 	public BufMgr() throws InvalidReplacerException
 	{
-		System.out.println("constructor for buffer manager. init replacer");
 		numBuffers = 1;
 		replacer = new Clock(this);
 	}
@@ -122,7 +121,7 @@ public class BufMgr extends AbstractBufMgr
 			PageNotReadException, BufferPoolExceededException,
 			PagePinnedException, BufMgrException, IOException
 	{
-		// This buffer manager just keeps allocating new pages and puts them
+		// This buffer manager just keeps allocating new pages and puts them 
 		// the hash table. It regards each page it is passed as a parameter
 		// (<code>page</code> variable) as empty, and thus doesn't take into
 		// account any data stored in it.
@@ -132,8 +131,7 @@ public class BufMgr extends AbstractBufMgr
 		byte [] data = new byte[MAX_SPACE];
 		pageIdToPageData.put(new PageId(pin_pgid.getPid()), data);
 		page.setpage(data);
-
-
+		
 		// Hint: Notice that this naive Buffer Manager allocates a page, but does not
 		// associate it with a page frame descriptor (an entry of the frameTable
 		// object). Your Buffer Manager shouldn't be that naive ;) . Have in mind that
@@ -185,20 +183,6 @@ public class BufMgr extends AbstractBufMgr
 			throws ReplacerException, PageUnpinnedException,
 			HashEntryNotFoundException, InvalidFrameNumberException
 	{
-        if(dirty) {
-			System.out.println("dirty bit is set. need to write to disk");
-			System.out.println("trying to read data from hash table");
-			byte[] data = (byte[])this.pageIdToPageData.get(PageId_in_a_DB);
-            Page aPage = new Page(data);
-			System.out.println(data);
-			try {
-                this.write_page(PageId_in_a_DB, aPage);
-            } catch (BufMgrException var6) {
-                var6.printStackTrace();
-            }
-        }
-
-//		System.out.println("unpin page");
 	}
 
 	/**
@@ -309,8 +293,6 @@ public class BufMgr extends AbstractBufMgr
 			PageUnpinnedException, PagePinnedException, PageNotFoundException,
 			BufMgrException, IOException
 	{
-		Page aPage = new Page((byte[])this.pageIdToPageData.get(pageid));
-		this.write_page(pageid, aPage);
 	}
 
 	/**
@@ -322,7 +304,7 @@ public class BufMgr extends AbstractBufMgr
 	 *                if there is a page that is already unpinned.
 	 * @exception PagePinnedException
 	 *                if a page is left pinned.
-	 * @ exception PageNotFoundException
+	 * @exception PageNotFoundException
 	 *                if a page is not found.
 	 * @exception BufMgrException
 	 *                other error occured in bufmgr layer
@@ -333,14 +315,6 @@ public class BufMgr extends AbstractBufMgr
 			PageUnpinnedException, PagePinnedException, PageNotFoundException,
 			BufMgrException, IOException
 	{
-		System.out.println("flush to disk?");
-		Iterator i = this.pageIdToPageData.keySet().iterator();
-
-		while(i.hasNext()) {
-			PageId id = (PageId)i.next();
-			this.flushPage(id);
-		}
-
 	}
 
 	/**

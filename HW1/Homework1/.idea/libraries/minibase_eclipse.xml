@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="minibase_eclipse">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/minibase_eclipse/minibase-exceptions.jar!/" />
+      <root url="jar://$PROJECT_DIR$/minibase_eclipse/minibase-global.jar!/" />
+      <root url="jar://$PROJECT_DIR$/minibase_eclipse/minibase-diskmgr.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../heap-source.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../diskmgr-source.zip!/" />
+      <root url="jar://$PROJECT_DIR$/../global-source.zip!/" />
+    </SOURCES>
+  </library>
+</component>

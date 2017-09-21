@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="Homework_0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/minibase-global.jar!/" />
+      <root url="jar://$PROJECT_DIR$/minibase-heap.jar!/" />
+      <root url="jar://$PROJECT_DIR$/minibase-diskmgr.jar!/" />
+      <root url="jar://$PROJECT_DIR$/minibase-exceptions.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../global-source.zip!/" />
+      <root url="jar://$PROJECT_DIR$/../diskmgr-source.zip!/" />
+    </SOURCES>
+  </library>
+</component>

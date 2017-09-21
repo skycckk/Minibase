@@ -6,13 +6,20 @@ import global.PageId;
 
 public class BufMgrFrameDesc extends global.AbstractBufMgrFrameDesc implements GlobalConst
 {
+	private int pinCount = 0;
+	private boolean dirty = false;
+	private PageId pid = null;
+	
+	public BufMgrFrameDesc(PageId pid) {
+		this.pid = pid;
+	}
 	/**
 	 * Returns the pin count of a certain frame page.
 	 * 
 	 * @return the pin count number.
 	 */
 	public int getPinCount()
-	{ return 0; };
+	{ return pinCount; };
 
 	/**
 	 * Increments the pin count of a certain frame page when the page is pinned.
@@ -20,7 +27,7 @@ public class BufMgrFrameDesc extends global.AbstractBufMgrFrameDesc implements G
 	 * @return the incremented pin count.
 	 */
 	public int pin()
-	{ return 0; };
+	{ return ++pinCount; };
 
 	/**
 	 * Decrements the pin count of a frame when the page is unpinned. If the pin
@@ -29,18 +36,18 @@ public class BufMgrFrameDesc extends global.AbstractBufMgrFrameDesc implements G
 	 * @return the decremented pin count.
 	 */
 	public int unpin()
-	{ return 0; };
+	{ return Math.max(--pinCount, 0); };
 
 	/**
 	 * 
 	 */
 	public PageId getPageNo()
-	{ return null; };
+	{ return pid; };
 
 	/**
 	 * the dirty bit, 1 (TRUE) stands for this frame is altered, 0 (FALSE) for
 	 * clean frames.
 	 */
 	public boolean isDirty()
-	{ return true; };
+	{ return dirty; };
 }

@@ -24,6 +24,8 @@ import exceptions.InvalidBufferException;
 import exceptions.InvalidFrameNumberException;
 import exceptions.InvalidPageNumberException;
 import exceptions.InvalidReplacerException;
+import exceptions.InvalidRunSizeException;
+import exceptions.OutOfSpaceException;
 import exceptions.PageNotFoundException;
 import exceptions.PageNotReadException;
 import exceptions.PagePinnedException;
@@ -242,8 +244,27 @@ public class BufMgr extends AbstractBufMgr
 			PageUnpinnedException, PageNotReadException, BufMgrException,
 			DiskMgrException, IOException
 	{
-
-		return new PageId();
+		PageId newPid = new PageId();
+		try {
+			SystemDefs.JavabaseDB.allocate_page(newPid, howmany); // this will get the page id to the start
+		} catch (OutOfSpaceException | InvalidRunSizeException | InvalidPageNumberException | FileIOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			pinPage(newPid, firstpage, true);
+		} catch (Exception e) {
+			try {
+				SystemDefs.JavabaseDB.deallocate_page(newPid, howmany);
+			} catch (InvalidRunSizeException | InvalidPageNumberException | FileIOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			return null;
+		}
+		
+		return newPid;
 	}
 
 	/**

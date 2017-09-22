@@ -141,7 +141,7 @@ public class BufMgr extends AbstractBufMgr
 		if (pageIdToPageData.get(pin_pgid) != null) {
 			// read it from pool
 			frameTable[pin_pgid.getPid()].pin();
-			replacer.pin(pin_pgid.getPid());
+			replacer.pin(pageIdToFrameDesc.get(pin_pgid).getFrameNo());
 			page.setpage((byte[])(pageIdToPageData.get(pin_pgid)));
 		} else {
 			// Find a victim page to replace it with the current one.
@@ -169,7 +169,7 @@ public class BufMgr extends AbstractBufMgr
 			frameTable[frameNo] = new BufMgrFrameDesc(pin_pgid, frameNo);
 			BufMgrFrameDesc newFrame = frameTable[frameNo];
 			newFrame.pin();
-			replacer.pin(pin_pgid.getPid());
+			replacer.pin(newFrame.getFrameNo());
 			page.setpage((byte[])(pageIdToPageData.get(pin_pgid)));
 			
 			// The following code excerpt reads the contents of the page with id pin_pgid

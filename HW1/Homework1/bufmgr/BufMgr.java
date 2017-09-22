@@ -415,7 +415,11 @@ public class BufMgr extends AbstractBufMgr
 	 */
 	public int getNumUnpinnedBuffers()
 	{
-		return 0;
+		int count = 0;
+		for (BufMgrFrameDesc frame : frameTable) {
+			if (frame != null && frame.getPinCount() == 0) count++;
+		}
+		return count;
 	}
 
 	/** A few routines currently need direct access to the FrameTable. */

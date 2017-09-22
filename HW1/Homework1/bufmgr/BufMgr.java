@@ -333,7 +333,7 @@ public class BufMgr extends AbstractBufMgr
 		if (frame.getPinCount() == 1) {
 			frame.unpin();
 			replacer.unpin(frame.getFrameNo());
-		} else {
+		} else if (frame.getPinCount() != 0) {
 			throw new PagePinnedException(null, "ERROR: pin count > 1 when free");
 		}
 		

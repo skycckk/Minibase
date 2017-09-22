@@ -69,7 +69,7 @@ public class BufMgr extends AbstractBufMgr
 	public BufMgr(int numbufs, String replacerArg) throws InvalidReplacerException
 	{
 		numBuffers = numbufs;
-
+		frameTable = new BufMgrFrameDesc[numBuffers];
 		setReplacer(replacerArg);
 	}
 
@@ -82,6 +82,7 @@ public class BufMgr extends AbstractBufMgr
 	{
 		System.out.println("constructor for buffer manager. init replacer");
 		numBuffers = 1;
+		frameTable = new BufMgrFrameDesc[numBuffers];
 		replacer = new Clock(this);
 	}
 

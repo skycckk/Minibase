@@ -4,6 +4,7 @@ package bufmgr;
 
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
@@ -55,6 +56,9 @@ public class BufMgr extends AbstractBufMgr
 
 	// An array of Descriptors one per frame. 
 	private BufMgrFrameDesc[] frameTable = new BufMgrFrameDesc[NUMBUF];
+	
+	// A map keeps the relation b/w page id and frame desc
+	private Map<PageId, BufMgrFrameDesc> pageIdToFrameDesc = new HashMap<>();
 
 
 	/**
@@ -157,9 +161,12 @@ public class BufMgr extends AbstractBufMgr
 					e.printStackTrace();
 				}
 			}
-			if (victimFrame != null) pageIdToPageData.remove(victimFrame.getPageNo());
+			if (victimFrame != null) {
+				pageIdToPageData.remove(victimFrame.getPageNo());
+				pageIdToFrameDesc.remove(victimFrame.getPageNo());
+			}
 			
-			frameTable[frameNo] = new BufMgrFrameDesc(pin_pgid);
+			frameTable[frameNo] = new BufMgrFrameDesc(pin_pgid, frameNo);
 			BufMgrFrameDesc newFrame = frameTable[frameNo];
 			newFrame.pin();
 			replacer.pin(pin_pgid.getPid());
@@ -174,6 +181,7 @@ public class BufMgr extends AbstractBufMgr
 				throw new PageNotReadException(e,"BUFMGR: DB_READ_PAGE_ERROR");
 			} 
 			pageIdToPageData.put(new PageId(pin_pgid.getPid()), page.getpage());
+			pageIdToFrameDesc.put(new PageId(pin_pgid.getPid()), newFrame);
 		}
 		
 		// Hint: Notice that this naive Buffer Manager allocates a page, but does not
@@ -207,20 +215,15 @@ public class BufMgr extends AbstractBufMgr
 			throws ReplacerException, PageUnpinnedException,
 			HashEntryNotFoundException, InvalidFrameNumberException
 	{
-        if(dirty) {
-			System.out.println("dirty bit is set. need to write to disk");
-			System.out.println("trying to read data from hash table");
-			byte[] data = (byte[])this.pageIdToPageData.get(PageId_in_a_DB);
-            Page aPage = new Page(data);
-			System.out.println(data);
-			try {
-                this.write_page(PageId_in_a_DB, aPage);
-            } catch (BufMgrException var6) {
-                var6.printStackTrace();
-            }
-        }
-
-//		System.out.println("unpin page");
+		BufMgrFrameDesc frame = pageIdToFrameDesc.get(PageId_in_a_DB);
+		if (frame == null) throw new PageUnpinnedException(null, "ERROR: NULL frame");
+		if (frame.getPinCount() > 0) {
+			frame.unpin();
+			if (frame.getPinCount() == 0) replacer.unpin(frame.getFrameNo());
+		} else {
+			throw new PageUnpinnedException(null, "ERROR: pinCount is zero at unpinPage");
+		}
+		frame.setDirty(dirty);
 	}
 
 	/**

@@ -328,6 +328,26 @@ public class BufMgr extends AbstractBufMgr
 			PageUnpinnedException, HashEntryNotFoundException, BufMgrException,
 			DiskMgrException, IOException
 	{
+		BufMgrFrameDesc frame = pageIdToFrameDesc.get(globalPageId);
+		if (frame == null) throw new PageUnpinnedException(null, "ERROR: NULL frame");
+		if (frame.getPinCount() == 1) {
+			frame.unpin();
+			replacer.unpin(frame.getFrameNo());
+		} else {
+			throw new PagePinnedException(null, "ERROR: pin count > 1 when free");
+		}
+		
+		// it's ok to free
+		frameTable[frame.getFrameNo()] = null;
+		pageIdToPageData.remove(globalPageId);
+		pageIdToFrameDesc.remove(globalPageId);
+		replacer.free(frame.getFrameNo());
+		try {
+			SystemDefs.JavabaseDB.deallocate_page(globalPageId);
+		} catch (InvalidRunSizeException | InvalidPageNumberException | FileIOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**

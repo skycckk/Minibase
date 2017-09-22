@@ -131,37 +131,56 @@ public class BufMgr extends AbstractBufMgr
 		//
 		// Extend this method to operate as it is supposed to (see the javadoc
 		// description above).
-		byte [] data = new byte[MAX_SPACE];
-		pageIdToPageData.put(new PageId(pin_pgid.getPid()), data);
-		page.setpage(data);
-
-
+		
+		// if frame is already in the buffer pool: just read it to the page
+		if (pageIdToPageData.get(pin_pgid) != null) {
+			// read it from pool
+			frameTable[pin_pgid.getPid()].pin();
+			replacer.pin(pin_pgid.getPid());
+			page.setpage((byte[])(pageIdToPageData.get(pin_pgid)));
+		} else {
+			// Find a victim page to replace it with the current one.
+			int frameNo = replacer.pick_victim(); 
+			if (frameNo < 0) {
+				page = null;
+				throw new ReplacerException(null, "BUFMGR: REPLACER_ERROR.");
+			}
+			// Find a victim page to replace it with the current one.
+			BufMgrFrameDesc victimFrame = frameTable[frameNo];
+			if (victimFrame != null && victimFrame.isDirty()) {
+				// flush to disk
+				try {
+					flushPage(victimFrame.getPageNo());
+				} catch (PageNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			if (victimFrame != null) pageIdToPageData.remove(victimFrame.getPageNo());
+			
+			frameTable[frameNo] = new BufMgrFrameDesc(pin_pgid);
+			BufMgrFrameDesc newFrame = frameTable[frameNo];
+			newFrame.pin();
+			replacer.pin(pin_pgid.getPid());
+			page.setpage((byte[])(pageIdToPageData.get(pin_pgid)));
+			
+			// The following code excerpt reads the contents of the page with id pin_pgid
+			// into the object page. Use it to read the contents of a dirty page to be
+			// written back to disk.
+			try {
+				SystemDefs.JavabaseDB.read_page(pin_pgid, page);
+			} catch (Exception e) {
+				throw new PageNotReadException(e,"BUFMGR: DB_READ_PAGE_ERROR");
+			} 
+			pageIdToPageData.put(new PageId(pin_pgid.getPid()), page.getpage());
+		}
+		
 		// Hint: Notice that this naive Buffer Manager allocates a page, but does not
 		// associate it with a page frame descriptor (an entry of the frameTable
 		// object). Your Buffer Manager shouldn't be that naive ;) . Have in mind that
 		// the hashtable is simply the "storage" area of your pages, while the frameTable
 		// contains the frame descriptors, each associated with one loaded page, which
 		// stores that page's metadata (pin count, status, etc.)
-		
-		// Find a victim page to replace it with the current one.
-		int frameNo = replacer.pick_victim(); 
-		if (frameNo < 0)
-		{
-			page = null;
-			throw new ReplacerException(null, "BUFMGR: REPLACER_ERROR.");
-
-		}
-		
-		// The following code excerpt reads the contents of the page with id pin_pgid
-		// into the object page. Use it to read the contents of a dirty page to be
-		// written back to disk.
-		try
-		{
-			SystemDefs.JavabaseDB.read_page(pin_pgid, page);
-		} catch (Exception e)
-		{
-			throw new PageNotReadException(e,"BUFMGR: DB_READ_PAGE_ERROR");
-		} 
 	}
 
 	/**

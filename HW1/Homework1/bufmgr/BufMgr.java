@@ -353,8 +353,19 @@ public class BufMgr extends AbstractBufMgr
 			PageUnpinnedException, PagePinnedException, PageNotFoundException,
 			BufMgrException, IOException
 	{
-		Page aPage = new Page((byte[])this.pageIdToPageData.get(pageid));
-		this.write_page(pageid, aPage);
+		BufMgrFrameDesc frame = pageIdToFrameDesc.get(pageid);
+		if (frame == null) throw new PageUnpinnedException(null, "ERROR: NULL frame");
+		if (frame.getPinCount() > 0) throw new PageUnpinnedException(null, "ERROR: still pinned");
+		if (frame.isDirty()) {
+			Page aPage = new Page((byte[])this.pageIdToPageData.get(pageid));
+			try {
+				SystemDefs.JavabaseDB.write_page(pageid, aPage);
+			} catch (InvalidPageNumberException | FileIOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			frame.setDirty(false);
+		}
 	}
 
 	/**

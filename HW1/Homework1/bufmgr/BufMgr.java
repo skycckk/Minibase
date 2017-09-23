@@ -68,7 +68,7 @@ public class BufMgr extends AbstractBufMgr
 	public BufMgr() throws InvalidReplacerException
 	{
 		System.out.println("constructor for buffer manager. init replacer");
-		numBuffers = 1;
+		numBuffers = 50;
 		frameTable = new BufMgrFrameDesc[numBuffers];
 		replacer = new Clock(this);
 	}
@@ -121,6 +121,7 @@ public class BufMgr extends AbstractBufMgr
 		// description above).
 		
 		// if frame is already in the buffer pool: just read it to the page
+		System.out.println("Calling pin page");
 		if (pageIdToPageData.get(pin_pgid) != null) {
 			// read it from pool
 			frameTable[pin_pgid.getPid()].pin();
@@ -154,7 +155,8 @@ public class BufMgr extends AbstractBufMgr
 
 			newFrame.pin();
 			replacer.pin(newFrame.getFrameNo());
-			page.setpage((byte[])(pageIdToPageData.get(pin_pgid)));
+
+			// there is nothign written here.
 
 			// The following code excerpt reads the contents of the page with id pin_pgid
 			// into the object page. Use it to read the contents of a dirty page to be

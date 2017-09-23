@@ -1,14 +1,10 @@
 package bufmgr;
 
-import global.GlobalConst;
-import global.AbstractBufMgr;
-import global.AbstractBufMgrFrameDesc;
-import global.AbstractBufMgrReplacer;
-
 import exceptions.BufferPoolExceededException;
 import exceptions.InvalidFrameNumberException;
 import exceptions.PagePinnedException;
 import exceptions.PageUnpinnedException;
+import global.AbstractBufMgrReplacer;
 
 
 /**
@@ -96,7 +92,7 @@ public abstract class BufMgrReplacer extends AbstractBufMgrReplacer
 	 * argument, gets the total number of buffer frames, and mainstains the head
 	 * of the clock.
 	 * 
-	 * @param mgr
+	 * @param mgrArg
 	 *            the buffer manage to be assigned to.
 	 */
 	public void setBufferManager(BufMgr mgrArg)

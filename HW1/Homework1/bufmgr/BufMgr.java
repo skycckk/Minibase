@@ -3,35 +3,18 @@
 package bufmgr;
 
 
+import diskmgr.Page;
+import exceptions.*;
+import global.AbstractBufMgr;
+import global.AbstractBufMgrFrameDesc;
+import global.PageId;
+import global.SystemDefs;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
-
-import global.AbstractBufMgr;
-import global.AbstractBufMgrFrameDesc;
-import global.PageId;
-import global.SystemDefs;
-import diskmgr.Page;
-
-import exceptions.BufMgrException;
-import exceptions.BufferPoolExceededException;
-import exceptions.DiskMgrException;
-import exceptions.FileIOException;
-import exceptions.HashEntryNotFoundException;
-import exceptions.HashOperationException;
-import exceptions.InvalidBufferException;
-import exceptions.InvalidFrameNumberException;
-import exceptions.InvalidPageNumberException;
-import exceptions.InvalidReplacerException;
-import exceptions.InvalidRunSizeException;
-import exceptions.OutOfSpaceException;
-import exceptions.PageNotFoundException;
-import exceptions.PageNotReadException;
-import exceptions.PagePinnedException;
-import exceptions.PageUnpinnedException;
-import exceptions.ReplacerException;
 
 // *****************************************************
 
@@ -162,16 +145,17 @@ public class BufMgr extends AbstractBufMgr
 				}
 			}
 			if (victimFrame != null) {
-				pageIdToPageData.remove(victimFrame.getPageNo());
+				pageIdToPageData.remove(victimFrame.getPageNo()); // remove the mapping from pgID to data from hashtable
 				pageIdToFrameDesc.remove(victimFrame.getPageNo());
 			}
-			
-			frameTable[frameNo] = new BufMgrFrameDesc(pin_pgid, frameNo);
-			BufMgrFrameDesc newFrame = frameTable[frameNo];
+
+			BufMgrFrameDesc newFrame = new BufMgrFrameDesc(pin_pgid, frameNo);
+			frameTable[frameNo] = newFrame;
+
 			newFrame.pin();
 			replacer.pin(newFrame.getFrameNo());
 			page.setpage((byte[])(pageIdToPageData.get(pin_pgid)));
-			
+
 			// The following code excerpt reads the contents of the page with id pin_pgid
 			// into the object page. Use it to read the contents of a dirty page to be
 			// written back to disk.
@@ -179,11 +163,11 @@ public class BufMgr extends AbstractBufMgr
 				SystemDefs.JavabaseDB.read_page(pin_pgid, page);
 			} catch (Exception e) {
 				throw new PageNotReadException(e,"BUFMGR: DB_READ_PAGE_ERROR");
-			} 
+			}
 			pageIdToPageData.put(new PageId(pin_pgid.getPid()), page.getpage());
 			pageIdToFrameDesc.put(new PageId(pin_pgid.getPid()), newFrame);
 		}
-		
+
 		// Hint: Notice that this naive Buffer Manager allocates a page, but does not
 		// associate it with a page frame descriptor (an entry of the frameTable
 		// object). Your Buffer Manager shouldn't be that naive ;) . Have in mind that
@@ -197,7 +181,7 @@ public class BufMgr extends AbstractBufMgr
 	 * it becomes zero, put it in a group of replacement candidates. if
 	 * pincount=0 before this call, return error.
 	 * 
-	 * @param globalPageId_in_a_DB
+	 * @param PageId_in_a_DB
 	 *            page number in the minibase.
 	 * @param dirty
 	 *            the dirty bit of the frame
@@ -397,7 +381,7 @@ public class BufMgr extends AbstractBufMgr
 	 *                if there is a page that is already unpinned.
 	 * @exception PagePinnedException
 	 *                if a page is left pinned.
-	 * @ exception PageNotFoundException
+	 * @exception PageNotFoundException
 	 *                if a page is not found.
 	 * @exception BufMgrException
 	 *                other error occured in bufmgr layer

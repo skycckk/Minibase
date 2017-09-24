@@ -30,7 +30,7 @@ public class MRU extends BufMgrReplacer
 	
 	public MRU(AbstractBufMgr b) 
 	{
-		setBufferManager(b);
+		setBufferManager((BufMgr)b);
 		initialize();
 	};
 	

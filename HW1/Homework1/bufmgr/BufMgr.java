@@ -452,6 +452,7 @@ public class BufMgr extends AbstractBufMgr
 		int count = 0;
 		for (BufMgrFrameDesc frame : frameTable) {
 			if (frame != null && frame.getPinCount() == 0) count++;
+			else if (frame == null) count++;
 		}
 		return count;
 	}

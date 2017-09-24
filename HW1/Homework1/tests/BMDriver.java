@@ -174,7 +174,187 @@ public class BMDriver extends TestDriver implements GlobalConst
 		return true;
 	}
 
-	public static void main(String argv[])
+
+	/*
+	THESE ARE THE TESTS HE PROVIDED.
+	MODIFIED TO WORK WITH OUR CODE.
+	 */
+    /**
+     * overrides the test1 function in TestDriver.  It tests some
+     * simple normal buffer manager operations.
+     *
+     * @return whether test1 has passed
+     */
+    public boolean test1a () {
+
+        System.out.print("\n  Test 1 does a simple test of normal buffer ");
+        System.out.print("manager operations:\n");
+
+        // We choose this number to ensure that at least one page will have to be
+        // written during this test.
+        boolean status = OK;
+        int numPages = SystemDefs.JavabaseBM.getNumUnpinnedBuffers() + 1;
+//        int numPages = Minibase.BufferManager.getNumUnpinned() + 1;
+        Page pg = new Page();
+        PageId pid;
+        PageId lastPid;
+        PageId firstPid = new PageId();
+
+        System.out.print("  - Allocate a bunch of new pages\n");
+
+        try {
+            firstPid = SystemDefs.JavabaseBM.newPage( pg, numPages );
+//            firstPid = Minibase.BufferManager.newPage( pg, numPages );
+
+        }
+        catch (Exception e) {
+            System.err.print("*** Could not allocate " + numPages);
+            System.err.print (" new pages in the database.\n");
+            e.printStackTrace();
+            return false;
+        }
+
+
+        // Unpin that first page... to simplify our loop.
+        try {
+            SystemDefs.JavabaseBM.unpinPage(firstPid, false /*not dirty*/);
+//            Minibase.BufferManager.unpinPage(firstPid, false /*not dirty*/);
+        }
+        catch (Exception e) {
+            System.err.print("*** Could not unpin the first new page.\n");
+            e.printStackTrace();
+            status = FAIL;
+        }
+
+        System.out.print("  - Write something on each one\n");
+
+        pid = new PageId();
+        lastPid = new PageId();
+
+        for ( pid.pid = firstPid.pid, lastPid.pid = pid.pid+numPages;
+              status == OK && pid.pid < lastPid.pid;
+              pid.pid = pid.pid + 1 ) {
+
+            try {
+                SystemDefs.JavabaseBM.unpinPage(pid, false);
+//                Minibase.BufferManager.pinPage( pid, pg, /*emptyPage:*/ false);
+            }
+            catch (Exception e) {
+                status = FAIL;
+                System.err.print("*** Could not pin new page "+pid.pid+"\n");
+                e.printStackTrace();
+            }
+
+            if ( status == OK ) {
+
+                // Copy the page number + 99999 onto each page.  It seems
+                // unlikely that this bit pattern would show up there by
+                // coincidence.
+                int data = pid.pid + 99999;
+
+                try {
+                    Convert.setIntValue (data, 0, pg.getpage());
+                }
+                catch (IOException e) {
+                    System.err.print ("*** Convert value failed\n");
+                    status = FAIL;
+                }
+
+                if (status == OK) {
+                    try {
+                        SystemDefs.JavabaseBM.unpinPage(pid, true);
+//                        Minibase.BufferManager.unpinPage( pid, /*dirty:*/ true );
+                    }
+                    catch (Exception e)  {
+                        status = FAIL;
+                        System.err.print("*** Could not unpin dirty page "
+                                + pid.pid + "\n");
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        if ( status == OK )
+            System.out.print ("  - Read that something back from each one\n" +
+                    "   (because we're buffering, this is where "  +
+                    "most of the writes happen)\n");
+
+        for (pid.pid=firstPid.pid; status==OK && pid.pid<lastPid.pid;
+             pid.pid = pid.pid + 1) {
+
+            try {
+                SystemDefs.JavabaseBM.pinPage(pid, pg, false);
+//                Minibase.BufferManager.pinPage( pid, pg, /*emptyPage:*/ false );
+            }
+            catch (Exception e) {
+                status = FAIL;
+                System.err.print("*** Could not pin page " + pid.pid + "\n");
+                e.printStackTrace();
+            }
+
+            if ( status == OK ) {
+
+                int data = 0;
+
+                try {
+                    data = Convert.getIntValue (0, pg.getpage());
+                }
+                catch (IOException e) {
+                    System.err.print ("*** Convert value failed \n");
+                    status = FAIL;
+                }
+
+                if (status == OK) {
+                    if (data != (pid.pid) + 99999) {
+                        status = FAIL;
+                        System.err.print ("*** Read wrong data back from page "
+                                + pid.pid + "\n");
+                    }
+                }
+
+                if (status == OK) {
+                    try {
+                        SystemDefs.JavabaseBM.unpinPage(pid, true);
+//                        Minibase.BufferManager.unpinPage( pid, /*dirty:*/ true );
+                    }
+                    catch (Exception e)  {
+                        status = FAIL;
+                        System.err.print("*** Could not unpin page " + pid.pid + "\n");
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        if (status == OK)
+            System.out.print ("  - Free the pages again\n");
+
+        for ( pid.pid=firstPid.pid; pid.pid < lastPid.pid;
+              pid.pid = pid.pid + 1) {
+
+            try {
+                SystemDefs.JavabaseBM.freePage(pid);
+//                Minibase.BufferManager.freePage( pid );
+            }
+            catch (Exception e) {
+                status = FAIL;
+                System.err.print("*** Error freeing page " + pid.pid + "\n");
+                e.printStackTrace();
+            }
+
+        }
+
+        if ( status == OK )
+            System.out.print("  Test 1 completed successfully.\n");
+
+        return status;
+    }
+
+
+
+
+    public static void main(String argv[])
 	{
 
 		BMDriver bmt = new BMDriver();

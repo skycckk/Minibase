@@ -42,6 +42,8 @@ public class BufMgr extends AbstractBufMgr
 	
 	// A map keeps the relation b/w page id and frame desc
 	private Map<PageId, BufMgrFrameDesc> pageIdToFrameDesc = new HashMap<>();
+	
+	private byte[][] cache;
 
 
 	/**
@@ -58,6 +60,7 @@ public class BufMgr extends AbstractBufMgr
 		numBuffers = numbufs;
 		frameTable = new BufMgrFrameDesc[numBuffers];
 		setReplacer(replacerArg);
+		cache = new byte[numBuffers][1024];
 	}
 
 	/**
@@ -71,6 +74,8 @@ public class BufMgr extends AbstractBufMgr
 		numBuffers = NUMBUF;
 		frameTable = new BufMgrFrameDesc[numBuffers];
 		replacer = new Clock(this);
+		cache = new byte[numBuffers][1024];
+		for (int i = 0; i < numBuffers; i++) cache[i] = new byte[1024];
 	}
 
 	/**
@@ -126,9 +131,12 @@ public class BufMgr extends AbstractBufMgr
 			// read it from pool
 			frameTable[pin_pgid.getPid()].pin();
 			replacer.pin(pageIdToFrameDesc.get(pin_pgid).getFrameNo());
-			page.setpage((byte[])(pageIdToPageData.get(pin_pgid))); // get the actual data in the buffer
+			BufMgrFrameDesc frameDesc = pageIdToFrameDesc.get(pin_pgid);
+			page.setpage(frameDesc.getdata()); // get the actual data in the buffer
+			System.out.println("Page id: " + pin_pgid + " is in the cache with buffer: " + frameDesc.getdata());
 		} else {
 			// Find a victim page to replace it with the current one.
+			System.out.println("Page id: " + pin_pgid + " is NOT in the cache");
 			int frameNo = replacer.pick_victim(); 
 			if (frameNo < 0) {
 				page = null;
@@ -149,20 +157,20 @@ public class BufMgr extends AbstractBufMgr
 				pageIdToPageData.remove(victimFrame.getPageNo()); // remove the mapping from pgID to data from hashtable
 				pageIdToFrameDesc.remove(victimFrame.getPageNo());
 			}
-
-			BufMgrFrameDesc newFrame = new BufMgrFrameDesc(pin_pgid, frameNo);
+			byte[] frameDate = cache[frameNo];
+			BufMgrFrameDesc newFrame = new BufMgrFrameDesc(pin_pgid, frameNo, frameDate);
 			frameTable[frameNo] = newFrame;
+			System.out.println("Victim No: " + frameNo);
 
 			newFrame.pin();
 			replacer.pin(newFrame.getFrameNo());
-
-
+			
 
 			// hashmap, look up actual data -> assign it to the page.
             // the hashmap entry is null, then we dont want to assign to the page.
 
 			// there is nothign written here.
-//            page.setpage((byte[])(pageIdToPageData.get(pin_pgid)));
+            
 
 			// The following code excerpt reads the contents of the page with id pin_pgid
 			// into the object page. Use it to read the contents of a dirty page to be
@@ -182,8 +190,8 @@ public class BufMgr extends AbstractBufMgr
                     throw new PageNotReadException(e,"BUFMGR: DB_READ_PAGE_ERROR");
                 }
             }
-
-			pageIdToPageData.put(new PageId(pin_pgid.getPid()), page.getpage()); // this stores the actual data
+            page.setpage(newFrame.getdata());
+			pageIdToPageData.put(new PageId(pin_pgid.getPid()), newFrame.getdata()); // this stores the actual data
 			pageIdToFrameDesc.put(new PageId(pin_pgid.getPid()), newFrame); // this is the descriptor table
 		}
 

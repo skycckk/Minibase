@@ -10,10 +10,12 @@ public class BufMgrFrameDesc extends global.AbstractBufMgrFrameDesc implements G
 	private boolean dirty = false;
 	private PageId pid = null;
 	private int frameNo = 0;
+	private byte[] page_data = null;
 	
-	public BufMgrFrameDesc(PageId pid, int frameNo) {
+	public BufMgrFrameDesc(PageId pid, int frameNo, byte[] page_data) {
 		this.pid = pid;
 		this.frameNo = frameNo;
+		this.page_data = page_data;
 	}
 	/**
 	 * Returns the pin count of a certain frame page.
@@ -45,6 +47,8 @@ public class BufMgrFrameDesc extends global.AbstractBufMgrFrameDesc implements G
 	 */
 	public PageId getPageNo()
 	{ return pid; };
+	
+	public byte[] getdata() { return page_data; };
 
 	/**
 	 * the dirty bit, 1 (TRUE) stands for this frame is altered, 0 (FALSE) for

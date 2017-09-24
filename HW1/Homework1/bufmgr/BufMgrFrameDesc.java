@@ -43,7 +43,7 @@ public class BufMgrFrameDesc extends global.AbstractBufMgrFrameDesc implements G
 	{ return Math.max(--pinCount, 0); };
 
 	/**
-	 * 
+	 *
 	 */
 	public PageId getPageNo()
 	{ return pid; };

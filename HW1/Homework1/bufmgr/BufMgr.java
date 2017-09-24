@@ -74,6 +74,7 @@ public class BufMgr extends AbstractBufMgr
 		numBuffers = NUMBUF;
 		frameTable = new BufMgrFrameDesc[numBuffers];
 		replacer = new Clock(this);
+		replacer = new MRU(this);
 		cache = new byte[numBuffers][1024];
 		for (int i = 0; i < numBuffers; i++) cache[i] = new byte[1024];
 	}
@@ -127,6 +128,7 @@ public class BufMgr extends AbstractBufMgr
 		
 		// if frame is already in the buffer pool: just read it to the page
 		System.out.println("Calling pin page");
+//		System.out.println("Calling pin page");
 		if (pageIdToPageData.get(pin_pgid) != null) {
 			// read it from pool
 			frameTable[pin_pgid.getPid()].pin();

@@ -1,5 +1,6 @@
 package tests;
 
+import exceptions.*;
 import global.Convert;
 import global.GlobalConst;
 import global.PageId;
@@ -13,6 +14,17 @@ import bufmgr.BufMgr;
 
 import diskmgr.Page;
 import heap.Tuple;
+
+// #TODO TEST CASES
+/*
+1. create a new page, pin it
+2. modify data in the buffer.
+3. unpin the page. check if dirty, flush to disk
+4. if requested page not exist in buffer, fetch from disk store into frame?
+5.
+ */
+// need to create a new page, then pin / un pin
+//
 
 public class BMDriver extends TestDriver implements GlobalConst
 {
@@ -105,11 +117,47 @@ public class BMDriver extends TestDriver implements GlobalConst
 	 * 
 	 * @return whether test1 has passed
 	 */
-	public boolean test1()
-	{
-		
-//		System.out.print("\n  Test 1 is not implemented. \n ");
-		createFile("file_100", 100);
+	public boolean test1() throws IOException, InvalidFrameNumberException, DiskMgrException, PagePinnedException, HashOperationException, BufferPoolExceededException, HashEntryNotFoundException, PageNotReadException, ReplacerException, PageUnpinnedException, BufMgrException {
+
+        System.out.println("invoking test1");
+
+		Page myPage = new Page();
+		PageId myPageId = SystemDefs.JavabaseBM.newPage(myPage,60);
+        System.out.println("new page created " + myPageId);
+
+        System.out.println("Unpinning");
+        SystemDefs.JavabaseBM.unpinPage(myPageId, false);
+
+
+        SystemDefs.JavabaseBM.pinPage(myPageId, myPage, true);
+
+
+        Convert.setIntValue(5, 0, myPage.getpage());
+        SystemDefs.JavabaseBM.unpinPage(myPageId, true);
+
+        for (int i=0; i < 40; i++)
+        {
+            PageId localPgId = new PageId(myPageId.getPid()+i+1);
+            SystemDefs.JavabaseBM.pinPage(localPgId, myPage, true);
+
+            Convert.setIntValue(i, 0, myPage.getpage());
+
+            SystemDefs.JavabaseBM.unpinPage(localPgId, true);
+        }
+
+
+        System.out.println("attempting to read " + myPageId);
+        SystemDefs.JavabaseBM.pinPage(myPageId, myPage, false);
+        System.out.println(Convert.getIntValue(0,myPage.getpage()));
+
+//        for (int i = 0; i < 50; i ++)
+//        {
+//            PageId localPgId = new PageId(myPageId.getPid()+i+1);
+//            SystemDefs.JavabaseBM.pinPage(localPgId, myPage, false);
+//            System.out.println(Convert.getIntValue(0,myPage.getpage()));
+//            SystemDefs.JavabaseBM.unpinPage(localPgId, false);
+//
+//        }
 		return true;
 	}
 

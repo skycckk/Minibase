@@ -68,7 +68,7 @@ public class BufMgr extends AbstractBufMgr
 	public BufMgr() throws InvalidReplacerException
 	{
 		System.out.println("constructor for buffer manager. init replacer");
-		numBuffers = 50;
+		numBuffers = NUMBUF;
 		frameTable = new BufMgrFrameDesc[numBuffers];
 		replacer = new Clock(this);
 	}
@@ -126,7 +126,7 @@ public class BufMgr extends AbstractBufMgr
 			// read it from pool
 			frameTable[pin_pgid.getPid()].pin();
 			replacer.pin(pageIdToFrameDesc.get(pin_pgid).getFrameNo());
-			page.setpage((byte[])(pageIdToPageData.get(pin_pgid)));
+			page.setpage((byte[])(pageIdToPageData.get(pin_pgid))); // get the actual data in the buffer
 		} else {
 			// Find a victim page to replace it with the current one.
 			int frameNo = replacer.pick_victim(); 
@@ -156,18 +156,35 @@ public class BufMgr extends AbstractBufMgr
 			newFrame.pin();
 			replacer.pin(newFrame.getFrameNo());
 
+
+
+			// hashmap, look up actual data -> assign it to the page.
+            // the hashmap entry is null, then we dont want to assign to the page.
+
 			// there is nothign written here.
+//            page.setpage((byte[])(pageIdToPageData.get(pin_pgid)));
 
 			// The following code excerpt reads the contents of the page with id pin_pgid
 			// into the object page. Use it to read the contents of a dirty page to be
 			// written back to disk.
-			try {
-				SystemDefs.JavabaseDB.read_page(pin_pgid, page);
-			} catch (Exception e) {
-				throw new PageNotReadException(e,"BUFMGR: DB_READ_PAGE_ERROR");
-			}
-			pageIdToPageData.put(new PageId(pin_pgid.getPid()), page.getpage());
-			pageIdToFrameDesc.put(new PageId(pin_pgid.getPid()), newFrame);
+
+            // this performs file i/o.
+            // fetch data from the disk, then put into frameTable.
+            //
+
+
+//            If emptyPage==TRUE, then actually no read is done to bring the page in.
+            if (!emptyPage)
+            {
+                try {
+                    SystemDefs.JavabaseDB.read_page(pin_pgid, page);
+                } catch (Exception e) {
+                    throw new PageNotReadException(e,"BUFMGR: DB_READ_PAGE_ERROR");
+                }
+            }
+
+			pageIdToPageData.put(new PageId(pin_pgid.getPid()), page.getpage()); // this stores the actual data
+			pageIdToFrameDesc.put(new PageId(pin_pgid.getPid()), newFrame); // this is the descriptor table
 		}
 
 		// Hint: Notice that this naive Buffer Manager allocates a page, but does not
@@ -201,7 +218,8 @@ public class BufMgr extends AbstractBufMgr
 			throws ReplacerException, PageUnpinnedException,
 			HashEntryNotFoundException, InvalidFrameNumberException
 	{
-		BufMgrFrameDesc frame = pageIdToFrameDesc.get(PageId_in_a_DB);
+        System.out.println("unpin page called");
+        BufMgrFrameDesc frame = pageIdToFrameDesc.get(PageId_in_a_DB);
 		if (frame == null) throw new PageUnpinnedException(null, "ERROR: NULL frame");
 		if (frame.getPinCount() > 0) {
 			frame.unpin();

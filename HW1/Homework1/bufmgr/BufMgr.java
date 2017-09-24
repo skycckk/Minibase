@@ -129,11 +129,11 @@ public class BufMgr extends AbstractBufMgr
 		// if frame is already in the buffer pool: just read it to the page
 		System.out.println("Calling pin page");
 //		System.out.println("Calling pin page");
-		if (pageIdToPageData.get(pin_pgid) != null) {
+		if (pageIdToPageData.get(pin_pgid) != null && pageIdToFrameDesc.get(pin_pgid) != null) {
 			// read it from pool
-			frameTable[pin_pgid.getPid()].pin();
 			replacer.pin(pageIdToFrameDesc.get(pin_pgid).getFrameNo());
 			BufMgrFrameDesc frameDesc = pageIdToFrameDesc.get(pin_pgid);
+			frameDesc.pin();
 			page.setpage(frameDesc.getdata()); // get the actual data in the buffer
 			System.out.println("Page id: " + pin_pgid + " is in the cache with buffer: " + frameDesc.getdata());
 		} else {

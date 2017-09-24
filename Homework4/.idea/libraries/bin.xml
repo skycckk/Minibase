@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="bin">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/code/bin/gl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/bin/bm.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/bin/dm.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/bin/hf.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/bin/ro.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/bin/qu.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/bin/ix.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

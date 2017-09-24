@@ -1,0 +1,15 @@
+<component name="libraryTable">
+  <library name="code">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/code/gl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/dm.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/hf.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/ro.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/bm.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/qu.jar!/" />
+      <root url="jar://$PROJECT_DIR$/code/ix.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

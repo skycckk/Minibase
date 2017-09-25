@@ -1,10 +1,6 @@
 package bufmgr;
 
-import global.GlobalConst;
 import global.AbstractBufMgr;
-import global.AbstractBufMgrFrameDesc;
-import global.AbstractBufMgrReplacer;
-
 import java.util.ArrayList;
 
 import exceptions.BufferPoolExceededException;
@@ -23,16 +19,14 @@ public class MRU extends BufMgrReplacer
 	// emptyList is a list of frame No. indicating which frame is not used
 	ArrayList<Integer> victimList = new ArrayList<>(); 
 	ArrayList<Integer> emptyList = new ArrayList<>(); 
-	public MRU() 
-	{
+	public MRU()  {
 		initialize();
-	};
+	}
 	
-	public MRU(AbstractBufMgr b) 
-	{
+	public MRU(AbstractBufMgr b)  {
 		setBufferManager((BufMgr)b);
 		initialize();
-	};
+	}
 	
 	private void initialize() {
 		totalFrames = mgr.getNumBuffers();
@@ -49,8 +43,7 @@ public class MRU extends BufMgrReplacer
 	 *             of buffers.
 	 * @return true if successful.
 	 */
-	public void pin(int frameNo) throws InvalidFrameNumberException
-	{
+	public void pin(int frameNo) throws InvalidFrameNumberException {
 		if (frameNo < 0 || frameNo > totalFrames) throw new InvalidFrameNumberException(null, "ERROR: invalid frame no.");
 		
 		if (state_bit[frameNo] == Referenced) {
@@ -77,8 +70,7 @@ public class MRU extends BufMgrReplacer
 	 * @return true if successful.
 	 */
 	public boolean unpin(int frameNo) throws InvalidFrameNumberException,
-			PageUnpinnedException
-	{
+			PageUnpinnedException {
 		if (frameNo < 0 || frameNo > totalFrames) return false;
 		if (state_bit[frameNo] == Pinned) {
 			// unpin must be happened after pinned
@@ -96,8 +88,7 @@ public class MRU extends BufMgrReplacer
 	 * @throws PagePinnedException
 	 *             if the page is pinned.
 	 */
-	public void free(int frameNo) throws PagePinnedException
-	{
+	public void free(int frameNo) throws PagePinnedException {
 		if (frameNo < 0 || frameNo > totalFrames) throw new PagePinnedException(null, "ERROR: invalid frame no.");
 		
 		if (state_bit[frameNo] == Referenced) {
@@ -106,12 +97,11 @@ public class MRU extends BufMgrReplacer
 			}
 		}
 		emptyList.add(0, frameNo);
-	};
+	}
 
 	/** Must pin the returned frame. */
 	public int pick_victim() throws BufferPoolExceededException,
-			PagePinnedException
-	{
+			PagePinnedException {
 		int victimNo = -1;
 		if (emptyList.size() > 0) { victimNo = emptyList.get(0); emptyList.remove(0); } 
 		else if (victimList.size() > 0) { victimNo = victimList.get(0); victimList.remove(0); }
@@ -121,15 +111,14 @@ public class MRU extends BufMgrReplacer
 
 	/** Retruns the name of the replacer algorithm. */
 	public String name()
-	{ return "MRU"; };
+	{ return "MRU"; }
 
 	/**
 	 * Counts the unpinned frames (free frames) in the buffer pool.
 	 * 
 	 * @returns the total number of unpinned frames in the buffer pool.
 	 */
-	public int getNumUnpinnedBuffers()
-	{
+	public int getNumUnpinnedBuffers() {
 		return emptyList.size() + victimList.size();
 	}
 }

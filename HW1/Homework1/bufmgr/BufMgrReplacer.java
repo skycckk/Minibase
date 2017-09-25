@@ -82,8 +82,7 @@ public abstract class BufMgrReplacer extends AbstractBufMgrReplacer
 	public BufMgrReplacer()	{}
 	/** Creates a replacer object. */
 	
-	public BufMgrReplacer(BufMgr javamgr)
-	{
+	public BufMgrReplacer(BufMgr javamgr) {
 		setBufferManager(javamgr);
 	}
 
@@ -95,8 +94,7 @@ public abstract class BufMgrReplacer extends AbstractBufMgrReplacer
 	 * @param mgrArg
 	 *            the buffer manage to be assigned to.
 	 */
-	public void setBufferManager(BufMgr mgrArg)
-	{
+	public void setBufferManager(BufMgr mgrArg) {
 		mgr = mgrArg;
 		this.frameTable = (BufMgrFrameDesc[]) mgr.getFrameTable();
 		int numBuffers = mgr.getNumBuffers();

@@ -182,7 +182,7 @@ public class BufMgr extends AbstractBufMgr
             // fetch data from the disk, then put into frameTable.
             //
 
-
+			page.setpage(newFrame.getdata());
 //            If emptyPage==TRUE, then actually no read is done to bring the page in.
             if (!emptyPage)
             {
@@ -192,7 +192,7 @@ public class BufMgr extends AbstractBufMgr
                     throw new PageNotReadException(e,"BUFMGR: DB_READ_PAGE_ERROR");
                 }
             }
-            page.setpage(newFrame.getdata());
+            
 			pageIdToPageData.put(new PageId(pin_pgid.getPid()), newFrame.getdata()); // this stores the actual data
 			pageIdToFrameDesc.put(new PageId(pin_pgid.getPid()), newFrame); // this is the descriptor table
 		}

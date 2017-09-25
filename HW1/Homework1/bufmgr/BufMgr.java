@@ -343,7 +343,16 @@ public class BufMgr extends AbstractBufMgr
 			DiskMgrException, IOException
 	{
 		BufMgrFrameDesc frame = pageIdToFrameDesc.get(globalPageId);
-		if (frame == null) throw new PageUnpinnedException(null, "ERROR: NULL frame");
+		if (frame == null) {
+			try {
+				SystemDefs.JavabaseDB.deallocate_page(globalPageId);
+			} catch (InvalidRunSizeException | InvalidPageNumberException | FileIOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return;
+		}
+		
 		if (frame.getPinCount() == 1) {
 			frame.unpin();
 			replacer.unpin(frame.getFrameNo());

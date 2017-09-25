@@ -86,6 +86,9 @@ public class Clock extends BufMgrReplacer
 	{
 		System.out.println("Clock : Picking victim");
 
+		if (this.getNumUnpinnedBuffers() == 0) {
+			throw new BufferPoolExceededException(null, "ERROR: not enough unpinned buffers. Waiting for unpin");
+		}
 
 		while ( checkClock() == -1 )
 		{
@@ -131,7 +134,6 @@ public class Clock extends BufMgrReplacer
 	 */
 	public int getNumUnpinnedBuffers()
 	{
-		System.out.println(mgr);
 		return mgr.getNumUnpinnedBuffers();
 	}
 

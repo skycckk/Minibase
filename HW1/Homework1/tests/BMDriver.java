@@ -59,7 +59,7 @@ public class BMDriver extends TestDriver implements GlobalConst
 	 * 
 	 * @return whether test1 has passed
 	 */
-	public boolean test1() throws IOException, InvalidFrameNumberException, DiskMgrException, PagePinnedException, HashOperationException, BufferPoolExceededException, HashEntryNotFoundException, PageNotReadException, ReplacerException, PageUnpinnedException, BufMgrException {
+	public boolean ztest1() throws IOException, InvalidFrameNumberException, DiskMgrException, PagePinnedException, HashOperationException, BufferPoolExceededException, HashEntryNotFoundException, PageNotReadException, ReplacerException, PageUnpinnedException, BufMgrException {
 		System.out.println("invoking test1");
 
         int numFrames = SystemDefs.JavabaseBM.getNumUnpinnedBuffers() + 1;
@@ -95,7 +95,7 @@ public class BMDriver extends TestDriver implements GlobalConst
 	 * 
 	 * @return whether test2 has passed
 	 */
-	public boolean test2()
+	public boolean ztest2()
 	{
 		
 		System.out.print("\n  Test 2 is not implemented. \n ");
@@ -114,7 +114,7 @@ public class BMDriver extends TestDriver implements GlobalConst
      *
      * @return whether test1 has passed
      */
-    public boolean test1a () {
+    public boolean ztest1a () {
 
         System.out.print("\n  Test 1 does a simple test of normal buffer ");
         System.out.print("manager operations:\n");
@@ -287,7 +287,7 @@ public class BMDriver extends TestDriver implements GlobalConst
      *
      * @return whether test2 has passed
      */
-    protected boolean test2a () {
+    public boolean test2a () {
 
         System.out.print("\n  Test 2 exercises some illegal buffer " +
                 "manager operations:\n");
@@ -465,7 +465,7 @@ public class BMDriver extends TestDriver implements GlobalConst
      *
      * @return whether test3 has passed
      */
-    protected boolean test3a () {
+    public boolean test3a () {
 
         System.out.print("\n  Test 3 exercises some of the internals " +
                 "of the buffer manager\n");

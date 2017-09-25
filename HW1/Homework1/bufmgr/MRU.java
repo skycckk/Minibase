@@ -115,7 +115,7 @@ public class MRU extends BufMgrReplacer
 		int victimNo = -1;
 		if (emptyList.size() > 0) { victimNo = emptyList.get(0); emptyList.remove(0); } 
 		else if (victimList.size() > 0) { victimNo = victimList.get(0); victimList.remove(0); }
-		else throw new PagePinnedException(null, "ERROR: not enough unpinned buffers. Waiting for unpin");
+		else throw new BufferPoolExceededException(null, "ERROR: not enough unpinned buffers. Waiting for unpin");
 		return victimNo;
 	}
 

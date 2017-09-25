@@ -230,7 +230,7 @@ public class BufMgr extends AbstractBufMgr
 	{
         System.out.println("unpin page called");
         BufMgrFrameDesc frame = pageIdToFrameDesc.get(PageId_in_a_DB);
-		if (frame == null) throw new PageUnpinnedException(null, "ERROR: NULL frame");
+		if (frame == null) throw new HashEntryNotFoundException(null, "ERROR: NULL frame");
 		if (frame.getPinCount() > 0) {
 			frame.unpin();
 			if (frame.getPinCount() == 0) replacer.unpin(frame.getFrameNo());

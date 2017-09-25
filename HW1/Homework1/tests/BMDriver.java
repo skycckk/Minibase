@@ -1,16 +1,11 @@
 package tests;
 
-import exceptions.*;
-import global.Convert;
-import global.GlobalConst;
-import global.PageId;
-import global.SystemDefs;
-import global.TestDriver;
-import java.io.IOException;
-
 import bufmgr.BufMgr;
-
 import diskmgr.Page;
+import exceptions.*;
+import global.*;
+
+import java.io.IOException;
 
 // #TODO TEST CASES
 /*
@@ -59,7 +54,7 @@ public class BMDriver extends TestDriver implements GlobalConst
 	 * 
 	 * @return whether test1 has passed
 	 */
-	public boolean ztest1() throws IOException, InvalidFrameNumberException, DiskMgrException, PagePinnedException, HashOperationException, BufferPoolExceededException, HashEntryNotFoundException, PageNotReadException, ReplacerException, PageUnpinnedException, BufMgrException {
+	public boolean test1() throws IOException, InvalidFrameNumberException, DiskMgrException, PagePinnedException, HashOperationException, BufferPoolExceededException, HashEntryNotFoundException, PageNotReadException, ReplacerException, PageUnpinnedException, BufMgrException, InvalidBufferException {
 		System.out.println("invoking test1");
 
         int numFrames = SystemDefs.JavabaseBM.getNumUnpinnedBuffers() + 1;
@@ -75,19 +70,21 @@ public class BMDriver extends TestDriver implements GlobalConst
 
         for (int i = 0; i < numFrames; i++) {
             PageId localPgId = new PageId(myPageId.getPid() + i);
-            System.out.println("Testing i = " + i + " PageId: " + localPgId.getPid());
+//            System.out.println("Testing i = " + i + " PageId: " + localPgId.getPid());
             SystemDefs.JavabaseBM.pinPage(localPgId, myPage, true);
 
             Convert.setIntValue(i, 0, myPage.getpage());
 
             SystemDefs.JavabaseBM.unpinPage(localPgId, true);
 
-            System.out.println("attempting to read " + localPgId);
+//            System.out.println("attempting to read " + localPgId);
             SystemDefs.JavabaseBM.pinPage(localPgId, myPage, false);
-            System.out.println("data has read: " + Convert.getIntValue(0, myPage.getpage()));
+//            System.out.println("data has read: " + Convert.getIntValue(0, myPage.getpage()));
             SystemDefs.JavabaseBM.unpinPage(localPgId, true);
+            SystemDefs.JavabaseBM.freePage(localPgId);
         }
-		return true;
+        System.out.println("test 1 has passed");
+        return true;
 	}
 
 	/**
@@ -114,7 +111,7 @@ public class BMDriver extends TestDriver implements GlobalConst
      *
      * @return whether test1 has passed
      */
-    public boolean ztest1a () {
+    public boolean test1a () {
 
         System.out.print("\n  Test 1 does a simple test of normal buffer ");
         System.out.print("manager operations:\n");

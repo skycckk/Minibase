@@ -165,7 +165,7 @@ public class BMDriver extends TestDriver implements GlobalConst
               pid.pid = pid.pid + 1 ) {
 
             try {
-                SystemDefs.JavabaseBM.pinPage(pid, pg, false);
+                SystemDefs.JavabaseBM.pinPage(pid, pg, true);
 //                Minibase.BufferManager.pinPage( pid, pg, /*emptyPage:*/ false);
             }
             catch (Exception e) {

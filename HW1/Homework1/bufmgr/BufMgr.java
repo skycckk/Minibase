@@ -160,7 +160,7 @@ public class BufMgr extends AbstractBufMgr
 				pageIdToFrameDesc.remove(victimFrame.getPageNo());
 			}
 			byte[] frameDate = cache[frameNo];
-			BufMgrFrameDesc newFrame = new BufMgrFrameDesc(pin_pgid, frameNo, frameDate);
+			BufMgrFrameDesc newFrame = new BufMgrFrameDesc(new PageId(pin_pgid.pid), frameNo, frameDate);
 			frameTable[frameNo] = newFrame;
 			System.out.println("Victim No: " + frameNo);
 

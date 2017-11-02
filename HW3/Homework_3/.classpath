@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path=""/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="minibase-bufmgr.jar"/>
+	<classpathentry kind="lib" path="minibase-catalog.jar"/>
+	<classpathentry kind="lib" path="minibase-core.jar"/>
+	<classpathentry kind="lib" path="minibase-diskmgr.jar"/>
+	<classpathentry kind="lib" path="minibase-exceptions.jar"/>
+	<classpathentry kind="lib" path="minibase-global.jar"/>
+	<classpathentry kind="lib" path="minibase-heap.jar"/>
+	<classpathentry kind="lib" path="minibase-index.jar"/>
+	<classpathentry kind="output" path=""/>
+</classpath>

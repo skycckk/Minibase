@@ -14,6 +14,8 @@ import exceptions.ConvertException;
 import exceptions.DeleteFashionException;
 import exceptions.DeleteFileEntryException;
 import exceptions.DeleteRecException;
+import exceptions.DiskMgrException;
+import exceptions.FileIOException;
 import exceptions.FreePageException;
 import exceptions.GetFileEntryException;
 import exceptions.HashEntryNotFoundException;
@@ -23,6 +25,7 @@ import exceptions.IndexSearchException;
 import exceptions.InsertException;
 import exceptions.InsertRecException;
 import exceptions.InvalidFrameNumberException;
+import exceptions.InvalidPageNumberException;
 import exceptions.IteratorException;
 import exceptions.KeyNotMatchException;
 import exceptions.KeyTooLongException;
@@ -67,6 +70,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 
 	private final static int MAGIC0 = 1989;
 
+	private BTHeaderPage header = null;
 
 	/**
 	 * Access method to data member.
@@ -76,7 +80,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	 */
 	public BTHeaderPage getHeaderPage()
 	{
-		return null;
+		return header;
 	}
 
 
@@ -92,10 +96,20 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	 *                failed when pin a page
 	 * @exception ConstructPageException
 	 *                BT page constructor failed
+	 * @throws IOException 
+	 * @throws DiskMgrException 
+	 * @throws InvalidPageNumberException 
+	 * @throws FileIOException 
 	 */
 	public BTreeFile(String filename) throws GetFileEntryException,
-			PinPageException, ConstructPageException
+			PinPageException, ConstructPageException, FileIOException, InvalidPageNumberException, DiskMgrException, IOException
 	{
+		PageId page = Minibase.JavabaseDB.get_file_entry(filename);
+		if (page == null) {
+			header = new BTHeaderPage();
+		} else {
+			header = new BTHeaderPage(page);
+		}
 	}
 
 	/**
@@ -118,11 +132,20 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	 *                error from lower layer
 	 * @exception AddFileEntryException
 	 *                can not add file into DB
+	 * @throws DiskMgrException 
+	 * @throws InvalidPageNumberException 
+	 * @throws FileIOException 
+	 * @throws PinPageException 
 	 */
 	public BTreeFile(String filename, int keytype, int keysize,
 			int delete_fashion) throws GetFileEntryException,
-			ConstructPageException, IOException, AddFileEntryException
+			ConstructPageException, IOException, AddFileEntryException, FileIOException, InvalidPageNumberException, DiskMgrException, PinPageException
 	{
+		this(filename);
+		
+		header.set_keyType((short) keytype);
+		header.set_maxKeySize(keysize);
+		header.set_deleteFashion(delete_fashion);
 	}
 
 	/**
@@ -136,11 +159,14 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	 *                error from the lower layer
 	 * @exception ReplacerException
 	 *                error from the lower layer
+	 * @throws IOException 
 	 */
 	public void close() throws PageUnpinnedException,
 			InvalidFrameNumberException, HashEntryNotFoundException,
-			ReplacerException
+			ReplacerException, IOException
 	{
+		if (header != null)
+			Minibase.JavabaseBM.unpinPage(header.getPageId(), false/* not dirty */);
 	}
 
 	/**

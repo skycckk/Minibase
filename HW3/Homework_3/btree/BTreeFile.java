@@ -165,8 +165,10 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			InvalidFrameNumberException, HashEntryNotFoundException,
 			ReplacerException, IOException
 	{
-		if (header != null)
+		if (header != null) {
 			Minibase.JavabaseBM.unpinPage(header.getPageId(), false/* not dirty */);
+			header = null;
+		}
 	}
 
 	/**

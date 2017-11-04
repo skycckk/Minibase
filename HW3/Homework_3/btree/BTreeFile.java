@@ -347,10 +347,45 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			}
 		} else {
 			// NOT IMPLEMENTED YET
+			KeyEntry newEntry = insertHelper(header.get_rootId(), key, rid);
+			if (newEntry != null) {
+				// New root occurs
+			}
 		}
 	}
 
-
+	private KeyEntry insertHelper(PageId currPage, Key key, RID rid) throws 
+		ConstructPageException, IOException, IndexSearchException, ReplacerException, 
+		PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException {
+		short keyType = header.get_keyType();
+		
+		// This will pin page (currPage)
+		BTSortedPage sortedPage = new BTSortedPage(currPage, keyType);
+		
+		if (sortedPage.getType() == BTSortedPage.INDEX) {
+			// Use page as argument to get a new indexPage does not pin the page again
+			BTIndexPage indexPage = new BTIndexPage((Page)sortedPage, keyType);
+			
+			// Get the entry(pid) for a given key
+			PageId nextPage = indexPage.getPageNoByKey(key);
+			
+			// Unpin because we've already got the next page info
+			Minibase.JavabaseBM.unpinPage(currPage, false/* not dirty */);
+			
+			// Recursively insert <key, rid> to the next page
+			KeyEntry newChildEntry = insertHelper(nextPage, key, rid);
+			
+			// If newChildEntry is null, then return because there is no child split (push up)
+			// Else, handle split
+			if (newChildEntry == null) return newChildEntry;
+			else {
+				// NOT IMPLEMENTED YET: Handle split
+			}
+		} else if (sortedPage.getType() == BTSortedPage.LEAF) {
+			// NOT IMPLEMENTED YET
+		}
+		return null;
+	}
 
 	/**
 	 * delete leaf entry given its <key, rid> pair. `rid' is IN the data entry;

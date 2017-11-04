@@ -159,6 +159,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			header.set_deleteFashion(delete_fashion);
 			header.set_magic0(MAGIC0);
 			header.set_rootId(new PageId(INVALID_PAGE));
+			Minibase.JavabaseDB.add_file_entry(filename, header.getPageId());
 		}
 	}
 

@@ -347,7 +347,15 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			}
 		} else {
 			// NOT IMPLEMENTED YET
-			KeyEntry newEntry = insertHelper(header.get_rootId(), key, rid);
+			KeyEntry newEntry = null;
+			try {
+				newEntry = insertHelper(header.get_rootId(), key, rid);
+			} catch (ReplacerException | PageUnpinnedException | HashEntryNotFoundException
+					| InvalidFrameNumberException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 			if (newEntry != null) {
 				// New root occurs
 			}
@@ -356,7 +364,8 @@ public class BTreeFile extends IndexFile implements GlobalConst
 
 	private KeyEntry insertHelper(PageId currPage, Key key, RID rid) throws 
 		ConstructPageException, IOException, IndexSearchException, ReplacerException, 
-		PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException {
+		PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException, 
+		IteratorException, LeafInsertRecException {
 		short keyType = header.get_keyType();
 		
 		// This will pin page (currPage)
@@ -382,7 +391,15 @@ public class BTreeFile extends IndexFile implements GlobalConst
 				// NOT IMPLEMENTED YET: Handle split
 			}
 		} else if (sortedPage.getType() == BTSortedPage.LEAF) {
-			// NOT IMPLEMENTED YET
+			BTLeafPage leafPage = new BTLeafPage((Page)sortedPage, keyType);
+			KeyEntry keyEntry = new KeyEntry(key, rid);
+			if (leafPage.available_space() >= keyEntry.getSizeInBytes()) {
+				leafPage.insertRecord(keyEntry.key, (RID)keyEntry.getData());
+				Minibase.JavabaseBM.unpinPage(currPage, false/* not dirty */);
+				return null;
+			} else {
+				// NOT IMPLEMENTED YET: handle split
+			}
 		}
 		return null;
 	}

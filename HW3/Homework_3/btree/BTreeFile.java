@@ -223,10 +223,44 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			ConstructPageException, PinPageException, ReplacerException, PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException, InvalidBufferException, HashOperationException, PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, DiskMgrException, InvalidRunSizeException, InvalidPageNumberException, FileIOException, FileEntryNotFoundException
 	{
 		if (header == null) return;
+		
+		if (header.get_rootId().getPid() != INVALID_PAGE) {
+			// destroy all pages by traversing all the nodes
+			destroyFileHelper(header.get_rootId(), header.get_keyType());
+		}
 		Minibase.JavabaseBM.unpinPage(header.getPageId(), false);
 		Minibase.JavabaseBM.freePage(header.getPageId());
 		Minibase.JavabaseDB.delete_file_entry(db_filename);
 		header = null;
+	}
+	
+	private void destroyFileHelper(PageId currPageId, short keyType) throws ConstructPageException, IOException, IteratorException, 
+			ReplacerException, PageUnpinnedException, HashEntryNotFoundException, 
+			InvalidFrameNumberException, InvalidBufferException, HashOperationException, 
+			PageNotReadException, BufferPoolExceededException, PagePinnedException, 
+			BufMgrException, DiskMgrException {
+		BTSortedPage sortedPage = new BTSortedPage(currPageId, keyType);
+		
+		if (sortedPage.getType() == BTSortedPage.INDEX) {
+			BTIndexPage indexPage = new BTIndexPage((Page)sortedPage, keyType);
+			
+			// left-most child
+			destroyFileHelper(sortedPage.getPrevPage(), keyType);
+
+			RID rid = new RID();
+			for (KeyEntry entry = indexPage.getFirst(rid); 
+				 entry != null;
+				 entry = indexPage.getNext(rid)) {
+				destroyFileHelper((PageId)entry.getData(), keyType);
+			}
+			Minibase.JavabaseBM.unpinPage(currPageId, false);
+			Minibase.JavabaseBM.freePage(currPageId);
+		} else if (sortedPage.getType() == BTSortedPage.LEAF) {
+			Minibase.JavabaseBM.unpinPage(currPageId, false);
+			Minibase.JavabaseBM.freePage(currPageId);
+		} else {
+			Minibase.JavabaseBM.unpinPage(currPageId, false/* not dirty */);
+		}
 	}
 
 

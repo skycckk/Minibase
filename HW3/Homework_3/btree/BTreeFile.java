@@ -309,9 +309,37 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			ConvertException, DeleteRecException, IndexSearchException,
 			IteratorException, LeafDeleteException, InsertException,
 			IOException
-
 	{
-
+		if (header.get_rootId().pid == INVALID_PAGE) {
+			// create a new page root
+			BTLeafPage rootPage = new BTLeafPage(header.get_keyType());
+			
+			rootPage.setPrevPage(new PageId(INVALID_PAGE));
+			rootPage.setNextPage(new PageId(INVALID_PAGE));
+			
+			rootPage.insertRecord(key, rid);
+			
+			// update header:
+			// retrieve header page by declaring a dummy header and pin it
+			// (tmpHeader is used to pin the page with pid and get the corresponding SortedPage)
+			BTHeaderPage tmpHeader = new BTHeaderPage(header.getPageId());
+			
+			// update root id
+			tmpHeader.set_rootId(rootPage.getCurPage());
+			
+			try {
+				// unpin and set the dirty bit and then write to db
+				// one is for the header page, the other one is for the root page
+				Minibase.JavabaseBM.unpinPage(header.getPageId(), true);
+				Minibase.JavabaseBM.unpinPage(rootPage.getCurPage(), true);
+			} catch (ReplacerException | PageUnpinnedException | HashEntryNotFoundException
+					| InvalidFrameNumberException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			// NOT IMPLEMENTED YET
+		}
 	}
 
 

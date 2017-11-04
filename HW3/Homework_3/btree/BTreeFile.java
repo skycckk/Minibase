@@ -17,8 +17,10 @@ import exceptions.DeleteFashionException;
 import exceptions.DeleteFileEntryException;
 import exceptions.DeleteRecException;
 import exceptions.DiskMgrException;
+import exceptions.DuplicateEntryException;
 import exceptions.FileEntryNotFoundException;
 import exceptions.FileIOException;
+import exceptions.FileNameTooLongException;
 import exceptions.FreePageException;
 import exceptions.GetFileEntryException;
 import exceptions.HashEntryNotFoundException;
@@ -39,6 +41,7 @@ import exceptions.LeafDeleteException;
 import exceptions.LeafInsertRecException;
 import exceptions.LeafRedistributeException;
 import exceptions.NodeNotMatchException;
+import exceptions.OutOfSpaceException;
 import exceptions.PageNotReadException;
 import exceptions.PagePinnedException;
 import exceptions.PageUnpinnedException;
@@ -146,10 +149,14 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	 * @throws InvalidPageNumberException 
 	 * @throws FileIOException 
 	 * @throws PinPageException 
+	 * @throws OutOfSpaceException 
+	 * @throws DuplicateEntryException 
+	 * @throws InvalidRunSizeException 
+	 * @throws FileNameTooLongException 
 	 */
 	public BTreeFile(String filename, int keytype, int keysize,
 			int delete_fashion) throws GetFileEntryException,
-			ConstructPageException, IOException, AddFileEntryException, FileIOException, InvalidPageNumberException, DiskMgrException, PinPageException
+			ConstructPageException, IOException, AddFileEntryException, FileIOException, InvalidPageNumberException, DiskMgrException, PinPageException, FileNameTooLongException, InvalidRunSizeException, DuplicateEntryException, OutOfSpaceException
 	{
 		this(filename);
 		

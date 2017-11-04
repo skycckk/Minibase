@@ -9,23 +9,29 @@ package btree;
 
 import diskmgr.Page;
 import exceptions.AddFileEntryException;
+import exceptions.BufMgrException;
+import exceptions.BufferPoolExceededException;
 import exceptions.ConstructPageException;
 import exceptions.ConvertException;
 import exceptions.DeleteFashionException;
 import exceptions.DeleteFileEntryException;
 import exceptions.DeleteRecException;
 import exceptions.DiskMgrException;
+import exceptions.FileEntryNotFoundException;
 import exceptions.FileIOException;
 import exceptions.FreePageException;
 import exceptions.GetFileEntryException;
 import exceptions.HashEntryNotFoundException;
+import exceptions.HashOperationException;
 import exceptions.IndexFullDeleteException;
 import exceptions.IndexInsertRecException;
 import exceptions.IndexSearchException;
 import exceptions.InsertException;
 import exceptions.InsertRecException;
+import exceptions.InvalidBufferException;
 import exceptions.InvalidFrameNumberException;
 import exceptions.InvalidPageNumberException;
+import exceptions.InvalidRunSizeException;
 import exceptions.IteratorException;
 import exceptions.KeyNotMatchException;
 import exceptions.KeyTooLongException;
@@ -33,6 +39,8 @@ import exceptions.LeafDeleteException;
 import exceptions.LeafInsertRecException;
 import exceptions.LeafRedistributeException;
 import exceptions.NodeNotMatchException;
+import exceptions.PageNotReadException;
+import exceptions.PagePinnedException;
 import exceptions.PageUnpinnedException;
 import exceptions.PinPageException;
 import exceptions.RecordNotFoundException;
@@ -71,6 +79,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	private final static int MAGIC0 = 1989;
 
 	private BTHeaderPage header = null;
+	private String db_filename;
 
 	/**
 	 * Access method to data member.
@@ -110,6 +119,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 		} else {
 			header = new BTHeaderPage(page);
 		}
+		db_filename = new String(filename);
 	}
 
 	/**
@@ -192,11 +202,31 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	 *                error in BT page constructor
 	 * @exception PinPageException
 	 *                failed when pin a page
+	 * @throws InvalidFrameNumberException 
+	 * @throws HashEntryNotFoundException 
+	 * @throws PageUnpinnedException 
+	 * @throws ReplacerException 
+	 * @throws DiskMgrException 
+	 * @throws BufMgrException 
+	 * @throws PagePinnedException 
+	 * @throws BufferPoolExceededException 
+	 * @throws PageNotReadException 
+	 * @throws HashOperationException 
+	 * @throws InvalidBufferException 
+	 * @throws FileIOException 
+	 * @throws InvalidPageNumberException 
+	 * @throws InvalidRunSizeException 
+	 * @throws FileEntryNotFoundException 
 	 */
 	public void destroyFile() throws IOException, IteratorException,
 			UnpinPageException, FreePageException, DeleteFileEntryException,
-			ConstructPageException, PinPageException
+			ConstructPageException, PinPageException, ReplacerException, PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException, InvalidBufferException, HashOperationException, PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, DiskMgrException, InvalidRunSizeException, InvalidPageNumberException, FileIOException, FileEntryNotFoundException
 	{
+		if (header == null) return;
+		Minibase.JavabaseBM.unpinPage(header.getPageId(), false);
+		Minibase.JavabaseBM.freePage(header.getPageId());
+		Minibase.JavabaseDB.deallocate_page(header.getPageId());
+		Minibase.JavabaseDB.delete_file_entry(db_filename);
 	}
 
 

@@ -143,9 +143,13 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	{
 		this(filename);
 		
-		header.set_keyType((short) keytype);
-		header.set_maxKeySize(keysize);
-		header.set_deleteFashion(delete_fashion);
+		if (header != null) {
+			header.set_keyType((short) keytype);
+			header.set_maxKeySize(keysize);
+			header.set_deleteFashion(delete_fashion);
+			header.set_magic0(MAGIC0);
+			header.set_rootId(new PageId(INVALID_PAGE));
+		}
 	}
 
 	/**

@@ -225,8 +225,8 @@ public class BTreeFile extends IndexFile implements GlobalConst
 		if (header == null) return;
 		Minibase.JavabaseBM.unpinPage(header.getPageId(), false);
 		Minibase.JavabaseBM.freePage(header.getPageId());
-		Minibase.JavabaseDB.deallocate_page(header.getPageId());
 		Minibase.JavabaseDB.delete_file_entry(db_filename);
+		header = null;
 	}
 
 

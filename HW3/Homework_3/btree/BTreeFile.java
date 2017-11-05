@@ -365,7 +365,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	private KeyEntry insertHelper(PageId currPage, Key key, RID rid) throws 
 		ConstructPageException, IOException, IndexSearchException, ReplacerException, 
 		PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException, 
-		IteratorException, LeafInsertRecException {
+		IteratorException, LeafInsertRecException, KeyNotMatchException, DeleteRecException {
 		short keyType = header.get_keyType();
 		
 		// This will pin page (currPage)
@@ -391,14 +391,84 @@ public class BTreeFile extends IndexFile implements GlobalConst
 				// NOT IMPLEMENTED YET: Handle split
 			}
 		} else if (sortedPage.getType() == BTSortedPage.LEAF) {
-			BTLeafPage leafPage = new BTLeafPage((Page)sortedPage, keyType);
+			BTLeafPage currLeafPage = new BTLeafPage((Page)sortedPage, keyType);
 			KeyEntry keyEntry = new KeyEntry(key, rid);
-			if (leafPage.available_space() >= keyEntry.getSizeInBytes()) {
-				leafPage.insertRecord(keyEntry.key, (RID)keyEntry.getData());
-				Minibase.JavabaseBM.unpinPage(currPage, false/* not dirty */);
+			if (currLeafPage.available_space() >= keyEntry.getSizeInBytes()) {
+				currLeafPage.insertRecord(keyEntry.key, (RID)keyEntry.getData());
+				Minibase.JavabaseBM.unpinPage(currPage, true);
 				return null;
 			} else {
-				// NOT IMPLEMENTED YET: handle split
+				// Handle leaf split
+				// New a leaf page
+				BTLeafPage newLeafPage = new BTLeafPage(keyType);
+				
+				// Set its double links
+				newLeafPage.setPrevPage(currLeafPage.getCurPage());
+				newLeafPage.setNextPage(currLeafPage.getNextPage());
+				PageId nextPageId = newLeafPage.getNextPage();
+				if (nextPageId.pid != INVALID_PAGE) {
+					BTLeafPage nextPage = new BTLeafPage(nextPageId, keyType);
+					nextPage.setPrevPage(newLeafPage.getCurPage());
+					Minibase.JavabaseBM.unpinPage(nextPageId, false);
+				}
+				currLeafPage.setNextPage(newLeafPage.getCurPage());
+				
+				// Get the middle index
+				RID dummyRid = new RID();
+				int entryCount = 0;
+				for (KeyEntry entry = currLeafPage.getFirst(dummyRid); entry != null;  entry = currLeafPage.getNext(dummyRid)){
+					entryCount++;
+				}
+				
+				int midEntryIndex = (int)Math.floor(entryCount / 2.0);
+				entryCount = 0;
+				KeyEntry midEntry = currLeafPage.getFirst(dummyRid);
+				while (entryCount < midEntryIndex) {
+					midEntry = currLeafPage.getNext(dummyRid);
+					entryCount++;
+				}
+				
+				// Move all entries from currLeaf to newLeaf, then move half size back
+				// Because there is a deletion operation, the whole copy must happen
+				KeyEntry tmpEntry = null;
+				for (tmpEntry = currLeafPage.getFirst(dummyRid); tmpEntry != null; 
+					 tmpEntry = currLeafPage.getFirst(dummyRid)) {
+					newLeafPage.insertRecord(tmpEntry.key, (RID)(tmpEntry.getData()));
+					currLeafPage.deleteSortedRecord(dummyRid);
+				}
+				
+				// if the insert key is greater than the middle key
+				//   L1 = [0, m-1] + insert
+				//   L2 = [m, n  ]
+				// else
+				//   L1 = [0  , m]
+				//   L2 = [m+1, n] + insert
+				if (key.compareTo(midEntry.key) >= 0) {
+					entryCount = 0;
+					// Move back 0 to m-1 entries from newLeaf to currLeaf
+					for (KeyEntry oldEntry = newLeafPage.getFirst(dummyRid); entryCount < midEntryIndex;
+						 oldEntry = newLeafPage.getFirst(dummyRid)) {
+						currLeafPage.insertRecord(oldEntry.key, (RID)(oldEntry.getData()));
+						newLeafPage.deleteSortedRecord(dummyRid);
+					}
+					currLeafPage.insertRecord(keyEntry.key, (RID)keyEntry.getData());
+				} else {
+					entryCount = 0;
+					// Move back 0 to m entries to current
+					for (KeyEntry oldEntry = newLeafPage.getFirst(dummyRid); entryCount <= midEntryIndex;
+						 oldEntry = newLeafPage.getFirst(dummyRid)) {
+						currLeafPage.insertRecord(oldEntry.key, (RID)(oldEntry.getData()));
+						newLeafPage.deleteSortedRecord(dummyRid);
+					}
+					newLeafPage.insertRecord(keyEntry.key, (RID)keyEntry.getData());
+				}
+				
+				// Grab the first entry from newLeaf as new parent
+				tmpEntry = newLeafPage.getFirst(dummyRid);
+				KeyEntry newParent = new KeyEntry(tmpEntry.key, newLeafPage.getCurPage());
+				Minibase.JavabaseBM.unpinPage(currPage, true);
+				Minibase.JavabaseBM.unpinPage(newLeafPage.getCurPage(), true);
+				return newParent;
 			}
 		}
 		return null;

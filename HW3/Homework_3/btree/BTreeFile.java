@@ -383,7 +383,8 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	private KeyEntry insertHelper(PageId currPage, Key key, RID rid) throws 
 		ConstructPageException, IOException, IndexSearchException, ReplacerException, 
 		PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException, 
-		IteratorException, LeafInsertRecException, KeyNotMatchException, DeleteRecException {
+		IteratorException, LeafInsertRecException, KeyNotMatchException,
+		DeleteRecException, IndexInsertRecException {
 		short keyType = header.get_keyType();
 		
 		// This will pin page (currPage)
@@ -406,7 +407,16 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			// Else, handle split
 			if (newChildEntry == null) return newChildEntry;
 			else {
-				// NOT IMPLEMENTED YET: Handle split
+				indexPage = new BTIndexPage((Page)sortedPage, keyType); // Read again
+				// If there is enough space, then insert then return
+				if (indexPage.available_space() >= newChildEntry.getSizeInBytes()) {
+					indexPage.insertKey(newChildEntry.key, (PageId)newChildEntry.getData());
+					Minibase.JavabaseBM.unpinPage(currPage, true);
+					return null;
+				} else {
+					// NOT IMPLEMENTED YET: Handle split
+				}
+				
 			}
 		} else if (sortedPage.getType() == BTSortedPage.LEAF) {
 			BTLeafPage currLeafPage = new BTLeafPage((Page)sortedPage, keyType);

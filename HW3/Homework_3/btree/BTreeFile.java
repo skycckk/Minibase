@@ -398,6 +398,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 				Minibase.JavabaseBM.unpinPage(currPage, true);
 				return null;
 			} else {
+				// System.out.println("Leaf split starts");
 				// Handle leaf split
 				// New a leaf page
 				BTLeafPage newLeafPage = new BTLeafPage(keyType);
@@ -420,13 +421,15 @@ public class BTreeFile extends IndexFile implements GlobalConst
 					entryCount++;
 				}
 				
-				int midEntryIndex = (int)Math.floor(entryCount / 2.0);
+				int midEntryIndex = (int)Math.floor((entryCount - 1) / 2.0);
 				entryCount = 0;
 				KeyEntry midEntry = currLeafPage.getFirst(dummyRid);
 				while (entryCount < midEntryIndex) {
 					midEntry = currLeafPage.getNext(dummyRid);
 					entryCount++;
 				}
+				
+				// System.out.println("mid entry key: " + midEntry.key);
 				
 				// Move all entries from currLeaf to newLeaf, then move half size back
 				// Because there is a deletion operation, the whole copy must happen
@@ -435,21 +438,24 @@ public class BTreeFile extends IndexFile implements GlobalConst
 					 tmpEntry = currLeafPage.getFirst(dummyRid)) {
 					newLeafPage.insertRecord(tmpEntry.key, (RID)(tmpEntry.getData()));
 					currLeafPage.deleteSortedRecord(dummyRid);
+					// System.out.println("move key to new leaf: " + tmpEntry.key);
 				}
 				
-				// if the insert key is greater than the middle key
+				// if the insert key is less than the middle key
 				//   L1 = [0, m-1] + insert
 				//   L2 = [m, n  ]
 				// else
 				//   L1 = [0  , m]
 				//   L2 = [m+1, n] + insert
-				if (key.compareTo(midEntry.key) >= 0) {
+				if (key.compareTo(midEntry.key) <= 0) {
 					entryCount = 0;
 					// Move back 0 to m-1 entries from newLeaf to currLeaf
 					for (KeyEntry oldEntry = newLeafPage.getFirst(dummyRid); entryCount < midEntryIndex;
 						 oldEntry = newLeafPage.getFirst(dummyRid)) {
 						currLeafPage.insertRecord(oldEntry.key, (RID)(oldEntry.getData()));
 						newLeafPage.deleteSortedRecord(dummyRid);
+						entryCount++;
+						// System.out.println("undo key: " + oldEntry.key);
 					}
 					currLeafPage.insertRecord(keyEntry.key, (RID)keyEntry.getData());
 				} else {
@@ -459,6 +465,8 @@ public class BTreeFile extends IndexFile implements GlobalConst
 						 oldEntry = newLeafPage.getFirst(dummyRid)) {
 						currLeafPage.insertRecord(oldEntry.key, (RID)(oldEntry.getData()));
 						newLeafPage.deleteSortedRecord(dummyRid);
+						entryCount++;
+						// System.out.println("undo key: " + oldEntry.key);
 					}
 					newLeafPage.insertRecord(keyEntry.key, (RID)keyEntry.getData());
 				}

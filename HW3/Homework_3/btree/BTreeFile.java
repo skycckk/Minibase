@@ -358,6 +358,24 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			
 			if (newEntry != null) {
 				// New root occurs
+				BTIndexPage newRootPage = new BTIndexPage(header.get_keyType());
+				newRootPage.insertKey(newEntry.key, (PageId)newEntry.getData());
+				
+				// Set the new root's left-most pointer to the original page
+				// Needn't to set the next point because the newEntry already has this info
+				newRootPage.setPrevPage(header.get_rootId());
+				
+				// update the header with the new root id
+				BTHeaderPage tmpHeader = new BTHeaderPage(header.getPageId());
+				tmpHeader.set_rootId(newRootPage.getCurPage());
+				try {
+					Minibase.JavabaseBM.unpinPage(header.getPageId(), true);
+					Minibase.JavabaseBM.unpinPage(newRootPage.getCurPage(), true);
+				} catch (ReplacerException | PageUnpinnedException | HashEntryNotFoundException
+						| InvalidFrameNumberException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		}
 	}

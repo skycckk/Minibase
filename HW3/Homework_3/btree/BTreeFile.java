@@ -624,7 +624,42 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			ConstructPageException, DeleteRecException, IndexSearchException,
 			IOException
 	{
+		if (header.get_rootId().pid != -1)
+			try {
+				deleteHelper(key, rid, header.get_rootId());
+			} catch (ReplacerException | PageUnpinnedException | HashEntryNotFoundException
+					| InvalidFrameNumberException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
 		return(false);
+	}
+	
+	private KeyEntry deleteHelper(Key key, RID rid, PageId currPage) throws IOException, ConstructPageException, IteratorException, 
+			KeyNotMatchException, ReplacerException, PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException,
+			LeafDeleteException, RecordNotFoundException {
+		// NOT IMPLEMENTED YET
+		
+		short keyType = header.get_keyType();
+		
+		// This will pin page (currPage)
+		BTSortedPage sortedPage = new BTSortedPage(currPage, keyType);
+		if (sortedPage.getType() == BTSortedPage.INDEX) {
+			// NOT IMPLEMENTED YET
+		} else if (sortedPage.getType() == BTSortedPage.LEAF) {
+			BTLeafPage currLeafPage = new BTLeafPage((Page)sortedPage, keyType);
+			RID dummyRid = new RID();
+			KeyEntry tmpEntry = currLeafPage.getFirst(dummyRid);
+			if (currLeafPage.delEntry(new KeyEntry(key, rid))) {
+				System.out.println("Successfully delete!!");
+			} else {
+				System.out.println("Delete FAIL!!");
+			}
+
+			Minibase.JavabaseBM.unpinPage(currLeafPage.getCurPage(), false);
+		}
+		return null;
 	}
 
 

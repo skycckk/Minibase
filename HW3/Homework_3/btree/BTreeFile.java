@@ -407,7 +407,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			// Else, handle split
 			if (newChildEntry == null) return newChildEntry;
 			else {
-				indexPage = new BTIndexPage((Page)sortedPage, keyType); // Read again
+				indexPage = new BTIndexPage(currPage, keyType); // Read again
 				// If there is enough space, then insert then return
 				if (indexPage.available_space() >= newChildEntry.getSizeInBytes()) {
 					indexPage.insertKey(newChildEntry.key, (PageId)newChildEntry.getData());

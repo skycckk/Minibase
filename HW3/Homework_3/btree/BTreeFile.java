@@ -642,7 +642,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			KeyNotMatchException, ReplacerException, PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException,
 			LeafDeleteException, RecordNotFoundException, IndexSearchException, InvalidBufferException, HashOperationException,
 			PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, DiskMgrException, 
-			IndexFullDeleteException, InsertRecException, DeleteRecException {
+			IndexFullDeleteException, InsertRecException, DeleteRecException, IndexInsertRecException {
 		// NOT IMPLEMENTED YET
 		
 		short keyType = header.get_keyType();
@@ -687,8 +687,68 @@ public class BTreeFile extends IndexFile implements GlobalConst
 				Minibase.JavabaseBM.freePage(currIndexPage.getCurPage());
 				return null;
 				}
-			} else { // if current index is not the root page and merge occurs
-				// NOT IMPLEMENTED YET
+			} else { // if current index is not the root page and the merging occurs
+				if (currIndexPage.available_space() > ((PAGE_SIZE - HFPage.DPFIXED) / 2)) {
+					System.out.println("[Index] Underflow occurs!!");
+					
+					// check sibling space
+					PageId siblingPage = new PageId();
+					BTIndexPage parentIndexPage = new BTIndexPage(parentPage, keyType);
+					// 0: no sibling, -1: left sibling, 1: right sibling
+					int direction = parentIndexPage.getSibling(key, siblingPage);
+					
+					System.out.println("[Index] Sibling direction: " + direction);
+					if (direction == 0) {
+						// No siblings
+						Minibase.JavabaseBM.unpinPage(parentPage, false);
+						Minibase.JavabaseBM.unpinPage(currIndexPage.getCurPage(), false);
+						return null;
+					}
+					
+					BTIndexPage siblingIndexPage = new BTIndexPage(siblingPage, keyType);
+					
+					// if sibling has no enough space, then do not merge
+					if (siblingIndexPage.available_space() >= ((PAGE_SIZE - HFPage.DPFIXED) - (currIndexPage.available_space()))) {
+						System.out.println("[Index] Sibling has enough space, can do a merge");
+						KeyEntry oldChildEntry; // this is used for pop-up then delete
+						RID tmpRid = new RID();
+						BTIndexPage leftPage, rightPage;
+						if (direction == 1) { // right sibling
+							oldChildEntry = siblingIndexPage.getFirst(tmpRid);
+							leftPage = currIndexPage;
+							rightPage = siblingIndexPage;
+						} else { // left sibling
+							oldChildEntry = currIndexPage.getFirst(tmpRid);
+							leftPage = siblingIndexPage;
+							rightPage = currIndexPage;
+						}
+						
+						// pull down the parent key and connect its pageNo to rightPage's prevPage
+						Key parentKey = parentIndexPage.findKey(oldChildEntry.key);
+						leftPage.insertKey(parentKey, rightPage.getPrevPage());
+						
+						// move all entries from Right to Left
+						KeyEntry movingEntry;
+						for (movingEntry = rightPage.getFirst(tmpRid); movingEntry != null;
+							 movingEntry = rightPage.getFirst(tmpRid)) {
+							leftPage.insertRecord(movingEntry);
+							rightPage.deleteSortedRecord(tmpRid);
+						}
+						
+						// current is changed to leftPage or rightPage so
+						// it will be freed or unpinned.
+						Minibase.JavabaseBM.unpinPage(leftPage.getCurPage(), true);
+						Minibase.JavabaseBM.unpinPage(parentPage, true);
+						Minibase.JavabaseBM.freePage(rightPage.getCurPage());
+						return oldChildEntry.key;
+					} else {
+						System.out.println("[Index] Sibling has no enough space to merge.");
+						Minibase.JavabaseBM.unpinPage(parentPage, false);
+						Minibase.JavabaseBM.unpinPage(currIndexPage.getCurPage(), true);
+						Minibase.JavabaseBM.unpinPage(siblingPage, true);
+						return null;
+					}
+				}
 			}
 			
 		} else if (sortedPage.getType() == BTSortedPage.LEAF) {

@@ -641,7 +641,8 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	private KeyEntry deleteHelper(Key key, RID rid, PageId currPage, PageId parentPage) throws IOException, ConstructPageException, IteratorException, 
 			KeyNotMatchException, ReplacerException, PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException,
 			LeafDeleteException, RecordNotFoundException, IndexSearchException, InvalidBufferException, HashOperationException,
-			PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, DiskMgrException, IndexFullDeleteException {
+			PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, DiskMgrException, 
+			IndexFullDeleteException, InsertRecException, DeleteRecException {
 		// NOT IMPLEMENTED YET
 		
 		short keyType = header.get_keyType();
@@ -700,15 +701,45 @@ public class BTreeFile extends IndexFile implements GlobalConst
 						}
 						
 						BTLeafPage siblingLeafPage = new BTLeafPage(siblingPage, keyType);
-						if (direction == 1) { // right sibling
-							
-						} else { // left sibling
-							
-						}
 						
 						// if sibling has no enough space, then do not merge
 						if (siblingLeafPage.available_space() >= (PAGE_SIZE - HFPage.DPFIXED - currLeafPage.available_space())) {
 							System.out.println("Sibling has enough space, can do a merge");
+							KeyEntry oldChildEntry; // this is used for pop-up then delete
+							RID tmpRid = new RID();
+							BTLeafPage leftPage, rightPage;
+							if (direction == 1) { // right sibling
+								oldChildEntry = siblingLeafPage.getFirst(tmpRid);
+								leftPage = currLeafPage;
+								rightPage = siblingLeafPage;
+							} else { // left sibling
+								oldChildEntry = currLeafPage.getFirst(tmpRid);
+								leftPage = siblingLeafPage;
+								rightPage = currLeafPage;
+							}
+							
+							// move all entries from Right to Left
+							KeyEntry movingEntry;
+							for (movingEntry = rightPage.getFirst(tmpRid); movingEntry != null;
+								 movingEntry = rightPage.getFirst(tmpRid)) {
+								leftPage.insertRecord(movingEntry);
+								rightPage.deleteSortedRecord(tmpRid);
+							}
+							
+							// adjust leaf pointers (delete right page in double linked-list)
+							if (rightPage.getNextPage().pid != INVALID_PAGE) {
+								BTLeafPage rightNextPage = new BTLeafPage(rightPage.getNextPage(), keyType);
+								rightNextPage.setPrevPage(leftPage.getCurPage());
+								Minibase.JavabaseBM.unpinPage(rightNextPage.getCurPage(), true);
+							}
+							leftPage.setNextPage(rightPage.getNextPage());
+							
+							// current is changed to leftPage or rightPage so
+							// it will be freed or unpinned.
+							Minibase.JavabaseBM.unpinPage(leftPage.getCurPage(), true);
+							Minibase.JavabaseBM.unpinPage(parentPage, true);
+							Minibase.JavabaseBM.freePage(rightPage.getCurPage());
+							return oldChildEntry;
 						} else {
 							System.out.println("Sibling has no enough space to merge.");
 							Minibase.JavabaseBM.unpinPage(parentPage, false);

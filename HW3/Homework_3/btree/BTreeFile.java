@@ -686,7 +686,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 						}
 					} else {
 						// Merge with siblings
-						System.out.println("Merging Leaf with sibling.");
+						System.out.println("Merging leaf with sibling.");
 						PageId siblingPage = new PageId();
 						BTIndexPage parentIndexPage = new BTIndexPage(parentPage, keyType);
 						// 0: no sibling, -1: left sibling, 1: right sibling
@@ -742,9 +742,9 @@ public class BTreeFile extends IndexFile implements GlobalConst
 							return oldChildEntry;
 						} else {
 							System.out.println("Sibling has no enough space to merge.");
-							Minibase.JavabaseBM.unpinPage(parentPage, false);
-							Minibase.JavabaseBM.unpinPage(currLeafPage.getCurPage(), false);
-							Minibase.JavabaseBM.unpinPage(siblingPage, false);
+							Minibase.JavabaseBM.unpinPage(parentPage, true);
+							Minibase.JavabaseBM.unpinPage(currLeafPage.getCurPage(), true);
+							Minibase.JavabaseBM.unpinPage(siblingPage, true);
 							return null;
 						}
 					}

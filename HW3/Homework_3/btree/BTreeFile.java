@@ -415,6 +415,50 @@ public class BTreeFile extends IndexFile implements GlobalConst
 					return null;
 				} else {
 					// NOT IMPLEMENTED YET: Handle split
+					BTIndexPage newIndexPage = new BTIndexPage(keyType);
+					KeyEntry tmpEntry = null;
+					RID dummyRid = new RID();
+					for (tmpEntry = indexPage.getFirst(dummyRid); tmpEntry != null; 
+						 tmpEntry = indexPage.getFirst(dummyRid)) {
+						newIndexPage.insertKey(tmpEntry.key, (PageId)tmpEntry.getData());
+						indexPage.deleteSortedRecord(dummyRid);
+					}
+					
+					// Move half size back to curr index page
+					KeyEntry lastInsertEntry = null; // used for undo in case of odd indexes
+					for (tmpEntry = newIndexPage.getFirst(dummyRid);
+						 indexPage.available_space() - 926 > newIndexPage.available_space() - 926;
+						 tmpEntry = newIndexPage.getFirst(dummyRid)) {
+						lastInsertEntry = tmpEntry;
+						indexPage.insertKey(tmpEntry.key, (PageId)tmpEntry.getData());
+						newIndexPage.deleteSortedRecord(dummyRid);
+					}
+					
+					// round the middle to the right
+					if (indexPage.available_space() - 926 > newIndexPage.available_space() - 926) {
+						newIndexPage.insertKey(lastInsertEntry.key, (PageId)lastInsertEntry.getData());
+						indexPage.deleteSortedRecord(dummyRid);
+					}
+					
+					KeyEntry newParent = newIndexPage.getFirst(dummyRid);
+					if (newChildEntry.key.compareTo(newParent.key) >= 0) {
+						// insert to the new index
+						newIndexPage.insertKey(newChildEntry.key, (PageId)newChildEntry.getData());
+					} else {
+						// insert to curr index
+						indexPage.insertKey(newChildEntry.key, (PageId)newChildEntry.getData());
+					}
+					
+					// push up new parent
+					newIndexPage.setPrevPage((PageId)newParent.getData());
+					newIndexPage.deleteSortedRecord(dummyRid);
+					
+					// reset new parent's data to the new index page
+					newParent.setData(newIndexPage.getCurPage());
+					
+					Minibase.JavabaseBM.unpinPage(currPage, true);
+					Minibase.JavabaseBM.unpinPage(newIndexPage.getCurPage(), true);
+					return newParent;
 				}
 				
 			}

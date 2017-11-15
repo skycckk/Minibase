@@ -416,40 +416,56 @@ public class BTreeFile extends IndexFile implements GlobalConst
 				} else {
 					// NOT IMPLEMENTED YET: Handle split
 					BTIndexPage newIndexPage = new BTIndexPage(keyType);
-					KeyEntry tmpEntry = null;
+					
+					// NOTICE: Same logic as inserting a leaf
+					// Get the middle index
 					RID dummyRid = new RID();
+					int entryCount = 0;
+					for (KeyEntry entry = indexPage.getFirst(dummyRid); entry != null; entry = indexPage.getNext(dummyRid)){
+						entryCount++;
+					}
+					
+					int midEntryIndex = (int)Math.floor((entryCount - 1) / 2.0);
+					entryCount = 0;
+					KeyEntry midEntry = indexPage.getFirst(dummyRid);
+					while (entryCount < midEntryIndex) {
+						midEntry = indexPage.getNext(dummyRid);
+						entryCount++;
+					}
+					
+					// Move all entries from currIndex to newIndex, then move half size back
+					// Because there is a deletion operation, the whole copy must happen
+					KeyEntry tmpEntry = null;
 					for (tmpEntry = indexPage.getFirst(dummyRid); tmpEntry != null; 
 						 tmpEntry = indexPage.getFirst(dummyRid)) {
 						newIndexPage.insertKey(tmpEntry.key, (PageId)tmpEntry.getData());
 						indexPage.deleteSortedRecord(dummyRid);
 					}
 					
-					// Move half size back to curr index page
-					KeyEntry lastInsertEntry = null; // used for undo in case of odd indexes
-					for (tmpEntry = newIndexPage.getFirst(dummyRid);
-						 indexPage.available_space() - 926 > newIndexPage.available_space() - 926;
-						 tmpEntry = newIndexPage.getFirst(dummyRid)) {
-						lastInsertEntry = tmpEntry;
-						indexPage.insertKey(tmpEntry.key, (PageId)tmpEntry.getData());
-						newIndexPage.deleteSortedRecord(dummyRid);
-					}
-					
-					// round the middle to the right
-					if (indexPage.available_space() - 926 > newIndexPage.available_space() - 926) {
-						newIndexPage.insertKey(lastInsertEntry.key, (PageId)lastInsertEntry.getData());
-						indexPage.deleteSortedRecord(dummyRid);
-					}
-					
-					KeyEntry newParent = newIndexPage.getFirst(dummyRid);
-					if (newChildEntry.key.compareTo(newParent.key) >= 0) {
-						// insert to the new index
-						newIndexPage.insertKey(newChildEntry.key, (PageId)newChildEntry.getData());
-					} else {
-						// insert to curr index
+					if (newChildEntry.key.compareTo(midEntry.key) <= 0) {
+						entryCount = 0;
+						// Move back 0 to m-1 entries from newLeaf to currLeaf
+						for (KeyEntry oldEntry = newIndexPage.getFirst(dummyRid); entryCount < midEntryIndex;
+							 oldEntry = newIndexPage.getFirst(dummyRid)) {
+							indexPage.insertKey(oldEntry.key, (PageId)(oldEntry.getData()));
+							newIndexPage.deleteSortedRecord(dummyRid);
+							entryCount++;
+						}
 						indexPage.insertKey(newChildEntry.key, (PageId)newChildEntry.getData());
+					} else {
+						entryCount = 0;
+						// Move back 0 to m entries to current
+						for (KeyEntry oldEntry = newIndexPage.getFirst(dummyRid); entryCount <= midEntryIndex;
+							 oldEntry = newIndexPage.getFirst(dummyRid)) {
+							indexPage.insertKey(oldEntry.key, (PageId)(oldEntry.getData()));
+							newIndexPage.deleteSortedRecord(dummyRid);
+							entryCount++;
+						}
+						newIndexPage.insertKey(newChildEntry.key, (PageId)newChildEntry.getData());
 					}
 					
 					// push up new parent
+					KeyEntry newParent = newIndexPage.getFirst(dummyRid);
 					newIndexPage.setPrevPage((PageId)newParent.getData());
 					newIndexPage.deleteSortedRecord(dummyRid);
 					

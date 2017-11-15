@@ -626,7 +626,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	{
 		if (header.get_rootId().pid != -1)
 			try {
-				deleteHelper(key, rid, header.get_rootId());
+				deleteHelper(key, rid, header.get_rootId(), null);
 			} catch (ReplacerException | PageUnpinnedException | HashEntryNotFoundException
 					| InvalidFrameNumberException | InvalidBufferException | HashOperationException 
 					| PageNotReadException | BufferPoolExceededException | PagePinnedException 
@@ -638,10 +638,10 @@ public class BTreeFile extends IndexFile implements GlobalConst
 		return(false);
 	}
 	
-	private KeyEntry deleteHelper(Key key, RID rid, PageId currPage) throws IOException, ConstructPageException, IteratorException, 
+	private KeyEntry deleteHelper(Key key, RID rid, PageId currPage, PageId parentPage) throws IOException, ConstructPageException, IteratorException, 
 			KeyNotMatchException, ReplacerException, PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException,
 			LeafDeleteException, RecordNotFoundException, IndexSearchException, InvalidBufferException, HashOperationException,
-			PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, DiskMgrException {
+			PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, DiskMgrException, IndexFullDeleteException {
 		// NOT IMPLEMENTED YET
 		
 		short keyType = header.get_keyType();
@@ -681,6 +681,39 @@ public class BTreeFile extends IndexFile implements GlobalConst
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
+							return null;
+						}
+					} else {
+						// Merge with siblings
+						System.out.println("Merging Leaf with sibling.");
+						PageId siblingPage = new PageId();
+						BTIndexPage parentIndexPage = new BTIndexPage(parentPage, keyType);
+						// 0: no sibling, -1: left sibling, 1: right sibling
+						int direction = parentIndexPage.getSibling(key, siblingPage);
+						
+						System.out.println("Sibling direction: " + direction);
+						if (direction == 0) {
+							// No siblings
+							Minibase.JavabaseBM.unpinPage(parentPage, false);
+							Minibase.JavabaseBM.unpinPage(currLeafPage.getCurPage(), false);
+							return null;
+						}
+						
+						BTLeafPage siblingLeafPage = new BTLeafPage(siblingPage, keyType);
+						if (direction == 1) { // right sibling
+							
+						} else { // left sibling
+							
+						}
+						
+						// if sibling has no enough space, then do not merge
+						if (siblingLeafPage.available_space() >= (PAGE_SIZE - HFPage.DPFIXED - currLeafPage.available_space())) {
+							System.out.println("Sibling has enough space, can do a merge");
+						} else {
+							System.out.println("Sibling has no enough space to merge.");
+							Minibase.JavabaseBM.unpinPage(parentPage, false);
+							Minibase.JavabaseBM.unpinPage(currLeafPage.getCurPage(), false);
+							Minibase.JavabaseBM.unpinPage(siblingPage, false);
 							return null;
 						}
 					}

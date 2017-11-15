@@ -658,38 +658,37 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			Minibase.JavabaseBM.unpinPage(currPage, false/* not dirty */);
 			
 			Key oldChildKey = deleteHelper(key, rid, nextPage, currIndexPage.getCurPage());
-			if (oldChildKey == null) {
+			if (oldChildKey == null)
 				return null;
-			} else {
-				System.out.println("HAS UP ENTRY with key: " + oldChildKey);
-				currIndexPage = new BTIndexPage((Page)sortedPage, keyType);
-				currIndexPage.deleteKey(oldChildKey);
-				
-				// check if current index is the root page
-				if (header.get_rootId().pid == currIndexPage.getCurPage().pid) {
-					System.out.println("up entry merges then delete at the root page");
-					if (currIndexPage.numberOfRecords() > 0) {
-						Minibase.JavabaseBM.unpinPage(currIndexPage.getCurPage(), true);
-						return null;
-					} else {
-						// reset header: set root to prev leaf
-						BTHeaderPage tmpHeader = new BTHeaderPage(header.getPageId());
-						tmpHeader.set_rootId(currIndexPage.getPrevPage());
-						try {
-							Minibase.JavabaseBM.unpinPage(header.getPageId(), true);
-						} catch (ReplacerException | PageUnpinnedException | HashEntryNotFoundException
-								| InvalidFrameNumberException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						
-						// free the root page
-						Minibase.JavabaseBM.freePage(currIndexPage.getCurPage());
-						return null;
-					}
+			
+			System.out.println("HAS UP ENTRY with key: " + oldChildKey);
+			currIndexPage = new BTIndexPage((Page)sortedPage, keyType);
+			currIndexPage.deleteKey(oldChildKey);
+			
+			// check if current index is the root page
+			if (header.get_rootId().pid == currIndexPage.getCurPage().pid) {
+				System.out.println("up entry merges then delete at the root page");
+				if (currIndexPage.numberOfRecords() > 0) {
+					Minibase.JavabaseBM.unpinPage(currIndexPage.getCurPage(), true);
+					return null;
 				} else {
-					// NOT IMPLEMENTED YET
+				// reset header: set root to prev leaf
+				BTHeaderPage tmpHeader = new BTHeaderPage(header.getPageId());
+				tmpHeader.set_rootId(currIndexPage.getPrevPage());
+				try {
+					Minibase.JavabaseBM.unpinPage(header.getPageId(), true);
+				} catch (ReplacerException | PageUnpinnedException | HashEntryNotFoundException
+						| InvalidFrameNumberException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
+				
+				// free the root page
+				Minibase.JavabaseBM.freePage(currIndexPage.getCurPage());
+				return null;
+				}
+			} else { // if current index is not the root page and merge occurs
+				// NOT IMPLEMENTED YET
 			}
 			
 		} else if (sortedPage.getType() == BTSortedPage.LEAF) {

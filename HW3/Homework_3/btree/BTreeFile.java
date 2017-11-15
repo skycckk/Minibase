@@ -638,7 +638,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 		return(false);
 	}
 	
-	private KeyEntry deleteHelper(Key key, RID rid, PageId currPage, PageId parentPage) throws IOException, ConstructPageException, IteratorException, 
+	private Key deleteHelper(Key key, RID rid, PageId currPage, PageId parentPage) throws IOException, ConstructPageException, IteratorException, 
 			KeyNotMatchException, ReplacerException, PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException,
 			LeafDeleteException, RecordNotFoundException, IndexSearchException, InvalidBufferException, HashOperationException,
 			PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, DiskMgrException, 
@@ -739,7 +739,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 							Minibase.JavabaseBM.unpinPage(leftPage.getCurPage(), true);
 							Minibase.JavabaseBM.unpinPage(parentPage, true);
 							Minibase.JavabaseBM.freePage(rightPage.getCurPage());
-							return oldChildEntry;
+							return oldChildEntry.key;
 						} else {
 							System.out.println("Sibling has no enough space to merge.");
 							Minibase.JavabaseBM.unpinPage(parentPage, true);

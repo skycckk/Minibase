@@ -628,7 +628,9 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			try {
 				deleteHelper(key, rid, header.get_rootId());
 			} catch (ReplacerException | PageUnpinnedException | HashEntryNotFoundException
-					| InvalidFrameNumberException e) {
+					| InvalidFrameNumberException | InvalidBufferException | HashOperationException 
+					| PageNotReadException | BufferPoolExceededException | PagePinnedException 
+					| BufMgrException | DiskMgrException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -638,7 +640,8 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	
 	private KeyEntry deleteHelper(Key key, RID rid, PageId currPage) throws IOException, ConstructPageException, IteratorException, 
 			KeyNotMatchException, ReplacerException, PageUnpinnedException, HashEntryNotFoundException, InvalidFrameNumberException,
-			LeafDeleteException, RecordNotFoundException {
+			LeafDeleteException, RecordNotFoundException, IndexSearchException, InvalidBufferException, HashOperationException,
+			PageNotReadException, BufferPoolExceededException, PagePinnedException, BufMgrException, DiskMgrException {
 		// NOT IMPLEMENTED YET
 		
 		short keyType = header.get_keyType();
@@ -651,8 +654,37 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			BTLeafPage currLeafPage = new BTLeafPage((Page)sortedPage, keyType);
 			RID dummyRid = new RID();
 			KeyEntry tmpEntry = currLeafPage.getFirst(dummyRid);
-			if (currLeafPage.delEntry(new KeyEntry(key, rid))) {
+			KeyEntry delEntry = new KeyEntry(key, rid);
+			if (currLeafPage.delEntry(delEntry)) {
 				System.out.println("Successfully delete!!");
+				// check underflow
+				if (currLeafPage.available_space() > ((PAGE_SIZE - HFPage.DPFIXED) / 2)) {
+					System.out.println("Underflow occurs!!");
+					
+					// Merge might occur
+					// If current leaf is the root, no merge
+					if (header.get_rootId().pid == currLeafPage.getCurPage().pid) {
+						if (currLeafPage.numberOfRecords() > 0) {
+							Minibase.JavabaseBM.unpinPage(currLeafPage.getCurPage(), false);
+							return null;
+						} else {
+							// free the whole tree
+							Minibase.JavabaseBM.freePage(currLeafPage.getCurPage());
+							
+							// reset header:
+							BTHeaderPage tmpHeader = new BTHeaderPage(header.getPageId());
+							tmpHeader.set_rootId(new PageId(INVALID_PAGE));
+							try {
+								Minibase.JavabaseBM.unpinPage(header.getPageId(), true);
+							} catch (ReplacerException | PageUnpinnedException | HashEntryNotFoundException
+									| InvalidFrameNumberException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							return null;
+						}
+					}
+				}
 			} else {
 				System.out.println("Delete FAIL!!");
 			}

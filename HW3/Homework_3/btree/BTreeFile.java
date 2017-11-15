@@ -662,7 +662,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 				return null;
 			
 			System.out.println("HAS UP ENTRY with key: " + oldChildKey);
-			currIndexPage = new BTIndexPage((Page)sortedPage, keyType);
+			currIndexPage = new BTIndexPage(sortedPage.getCurPage(), keyType);
 			currIndexPage.deleteKey(oldChildKey);
 			
 			// check if current index is the root page

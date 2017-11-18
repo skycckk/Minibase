@@ -671,13 +671,13 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			if (oldChildKey == null)
 				return null;
 			
-			System.out.println("HAS UP ENTRY with key: " + oldChildKey);
+			// System.out.println("HAS UP ENTRY with key: " + oldChildKey);
 			currIndexPage = new BTIndexPage(sortedPage.getCurPage(), keyType);
 			currIndexPage.deleteKey(oldChildKey);
 			
 			// check if current index is the root page
 			if (header.get_rootId().pid == currIndexPage.getCurPage().pid) {
-				System.out.println("up entry merges then delete at the root page");
+				// System.out.println("up entry merges then delete at the root page");
 				if (currIndexPage.numberOfRecords() > 0) {
 					Minibase.JavabaseBM.unpinPage(currIndexPage.getCurPage(), true);
 					return null;
@@ -699,7 +699,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 				}
 			} else { // if current index is not the root page and the merging occurs
 				if (currIndexPage.available_space() > ((PAGE_SIZE - HFPage.DPFIXED) / 2)) {
-					System.out.println("[Index] Underflow occurs!!");
+					// System.out.println("[Index] Underflow occurs!!");
 					
 					// check sibling space
 					PageId siblingPage = new PageId();
@@ -707,7 +707,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 					// 0: no sibling, -1: left sibling, 1: right sibling
 					int direction = parentIndexPage.getSibling(key, siblingPage);
 					
-					System.out.println("[Index] Sibling direction: " + direction);
+					// System.out.println("[Index] Sibling direction: " + direction);
 					if (direction == 0) {
 						// No siblings
 						Minibase.JavabaseBM.unpinPage(parentPage, false);
@@ -719,7 +719,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 					
 					// if sibling has no enough space, then do not merge
 					if (siblingIndexPage.available_space() >= ((PAGE_SIZE - HFPage.DPFIXED) - (currIndexPage.available_space()))) {
-						System.out.println("[Index] Sibling has enough space, can do a merge");
+						// System.out.println("[Index] Sibling has enough space, can do a merge");
 						KeyEntry oldChildEntry; // this is used for pop-up then delete
 						RID tmpRid = new RID();
 						BTIndexPage leftPage, rightPage;
@@ -752,7 +752,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 						Minibase.JavabaseBM.freePage(rightPage.getCurPage());
 						return oldChildEntry.key;
 					} else {
-						System.out.println("[Index] Sibling has no enough space to merge.");
+						// System.out.println("[Index] Sibling has no enough space to merge.");
 						Minibase.JavabaseBM.unpinPage(parentPage, false);
 						Minibase.JavabaseBM.unpinPage(currIndexPage.getCurPage(), true);
 						Minibase.JavabaseBM.unpinPage(siblingPage, true);
@@ -767,10 +767,10 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			KeyEntry tmpEntry = currLeafPage.getFirst(dummyRid);
 			KeyEntry delEntry = new KeyEntry(key, rid);
 			if (currLeafPage.delEntry(delEntry)) {
-				System.out.println("Successfully delete!!");
+				// System.out.println("Successfully delete!!");
 				// check underflow
 				if (currLeafPage.available_space() > ((PAGE_SIZE - HFPage.DPFIXED) / 2)) {
-					System.out.println("Underflow occurs!!");
+					// System.out.println("Underflow occurs!!");
 					
 					// Merge might occur
 					// If current leaf is the root, no merge
@@ -796,13 +796,13 @@ public class BTreeFile extends IndexFile implements GlobalConst
 						}
 					} else {
 						// Merge with siblings
-						System.out.println("Merging leaf with sibling.");
+						// System.out.println("Merging leaf with sibling.");
 						PageId siblingPage = new PageId();
 						BTIndexPage parentIndexPage = new BTIndexPage(parentPage, keyType);
 						// 0: no sibling, -1: left sibling, 1: right sibling
 						int direction = parentIndexPage.getSibling(key, siblingPage);
 						
-						System.out.println("Sibling direction: " + direction);
+						// System.out.println("Sibling direction: " + direction);
 						if (direction == 0) {
 							// No siblings
 							Minibase.JavabaseBM.unpinPage(parentPage, false);
@@ -814,7 +814,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 						
 						// if sibling has no enough space, then do not merge
 						if (siblingLeafPage.available_space() >= (PAGE_SIZE - HFPage.DPFIXED - currLeafPage.available_space())) {
-							System.out.println("Sibling has enough space, can do a merge");
+							// System.out.println("Sibling has enough space, can do a merge");
 							KeyEntry oldChildEntry; // this is used for pop-up then delete
 							RID tmpRid = new RID();
 							BTLeafPage leftPage, rightPage;
@@ -851,7 +851,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 							Minibase.JavabaseBM.freePage(rightPage.getCurPage());
 							return oldChildEntry.key;
 						} else {
-							System.out.println("Sibling has no enough space to merge.");
+							// System.out.println("Sibling has no enough space to merge.");
 							Minibase.JavabaseBM.unpinPage(parentPage, true);
 							Minibase.JavabaseBM.unpinPage(currLeafPage.getCurPage(), true);
 							Minibase.JavabaseBM.unpinPage(siblingPage, true);
@@ -860,7 +860,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 					}
 				}
 			} else {
-				System.out.println("Delete FAIL!!");
+				 System.out.println("Delete FAIL!!");
 			}
 
 			Minibase.JavabaseBM.unpinPage(currLeafPage.getCurPage(), false);

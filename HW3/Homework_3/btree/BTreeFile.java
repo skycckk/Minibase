@@ -481,6 +481,16 @@ public class BTreeFile extends IndexFile implements GlobalConst
 		} else if (sortedPage.getType() == BTSortedPage.LEAF) {
 			BTLeafPage currLeafPage = new BTLeafPage((Page)sortedPage, keyType);
 			KeyEntry keyEntry = new KeyEntry(key, rid);
+			
+			// Handle duplicate. No insert when it happens.
+			RID scanRid = new RID();
+			for (KeyEntry entry = currLeafPage.getFirst(scanRid); entry != null;  entry = currLeafPage.getNext(scanRid)) {
+				if (entry.key.equals(key)) {
+					Minibase.JavabaseBM.unpinPage(currPage, true);
+					return null;
+				}
+			}
+			
 			if (currLeafPage.available_space() >= keyEntry.getSizeInBytes()) {
 				currLeafPage.insertRecord(keyEntry.key, (RID)keyEntry.getData());
 				Minibase.JavabaseBM.unpinPage(currPage, true);

@@ -7,67 +7,19 @@
 
 package btree;
 
+import btree.page.BTHeaderPage;
+import btree.page.BTIndexPage;
+import btree.page.BTLeafPage;
+import btree.page.BTSortedPage;
 import diskmgr.Page;
-import exceptions.AddFileEntryException;
-import exceptions.BufMgrException;
-import exceptions.BufferPoolExceededException;
-import exceptions.ConstructPageException;
-import exceptions.ConvertException;
-import exceptions.DeleteFashionException;
-import exceptions.DeleteFileEntryException;
-import exceptions.DeleteRecException;
-import exceptions.DiskMgrException;
-import exceptions.DuplicateEntryException;
-import exceptions.FileEntryNotFoundException;
-import exceptions.FileIOException;
-import exceptions.FileNameTooLongException;
-import exceptions.FreePageException;
-import exceptions.GetFileEntryException;
-import exceptions.HashEntryNotFoundException;
-import exceptions.HashOperationException;
-import exceptions.IndexFullDeleteException;
-import exceptions.IndexInsertRecException;
-import exceptions.IndexSearchException;
-import exceptions.InsertException;
-import exceptions.InsertRecException;
-import exceptions.InvalidBufferException;
-import exceptions.InvalidFrameNumberException;
-import exceptions.InvalidPageNumberException;
-import exceptions.InvalidRunSizeException;
-import exceptions.IteratorException;
-import exceptions.KeyNotMatchException;
-import exceptions.KeyTooLongException;
-import exceptions.LeafDeleteException;
-import exceptions.LeafInsertRecException;
-import exceptions.LeafRedistributeException;
-import exceptions.NodeNotMatchException;
-import exceptions.OutOfSpaceException;
-import exceptions.PageNotReadException;
-import exceptions.PagePinnedException;
-import exceptions.PageUnpinnedException;
-import exceptions.PinPageException;
-import exceptions.RecordNotFoundException;
-import exceptions.RedistributeException;
-import exceptions.ReplacerException;
-import exceptions.UnpinPageException;
-import global.AttrType;
-import global.GlobalConst;
-import global.Minibase;
-import global.PageId;
-import global.RID;
+import exceptions.*;
+import global.*;
 import heap.HFPage;
 import index.IndexFile;
 import index.Key;
 import index.KeyEntry;
 
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-
-import btree.page.BTIndexPage;
-import btree.page.BTLeafPage;
-import btree.page.BTSortedPage;
-import btree.page.BTHeaderPage;
  
 /**
  * btfile.java This is the main definition of class BTreeFile, which derives
@@ -870,6 +822,13 @@ public class BTreeFile extends IndexFile implements GlobalConst
 
 
 	/**
+	 *
+	 * new_scan(Key key1,Key key2) - create a BTFileScan over the file starting
+	 * with records having value key1, and ending with the last record having value key2.
+	 * If key1 is null, start the scan at the beginning of the file.
+	 * If key2 is null, end the scan at the end of the file.
+	 * To search for records with only one key value, set key1 equal to key2.
+	 *
 	 * create a scan with given keys Cases: (1) lo_key = null, hi_key = null
 	 * scan the whole index (2) lo_key = null, hi_key!= null range scan from min
 	 * to the hi_key (3) lo_key!= null, hi_key = null range scan from the lo_key
@@ -896,10 +855,29 @@ public class BTreeFile extends IndexFile implements GlobalConst
 	 */
 	public BTFileScan new_scan(Key lo_key, Key hi_key)
 			throws IOException, KeyNotMatchException, IteratorException,
-			ConstructPageException, PinPageException, UnpinPageException
+			ConstructPageException, PinPageException, UnpinPageException, PageUnpinnedException, ReplacerException, BufferPoolExceededException, HashOperationException, PageNotReadException, BufMgrException, InvalidFrameNumberException, PagePinnedException, HashEntryNotFoundException
 
 	{
-		return(null);
+		BTFileScan scan = new BTFileScan();
+
+		scan.keyType = header.get_keyType();
+		scan.maxKeysize = header.get_maxKeySize();
+
+		HFPage page = new HFPage();
+		Minibase.JavabaseBM.pinPage(header.get_rootId(), page, false);
+		BTSortedPage currentPage = new BTSortedPage(page, header.get_keyType());
+		PageId currentPageId = new PageId();
+		while (currentPage.getType() == 11) {
+			BTIndexPage currentIndexPage = new BTIndexPage(currentPage, header.get_keyType());
+			currentPageId = currentIndexPage.getLeftLink();
+			Minibase.JavabaseBM.unpinPage(currentPage.getCurPage(), false);
+			currentPage = new BTSortedPage(currentPageId, header.get_keyType()); //
+		}
+		scan.leafPage = new BTLeafPage(currentPage, header.get_keyType());
+		scan.curRid = scan.leafPage.firstRecord();
+
+
+		return scan;
 	}
 
 

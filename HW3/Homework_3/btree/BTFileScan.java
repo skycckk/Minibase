@@ -53,8 +53,12 @@ public class BTFileScan extends IndexFileScan implements GlobalConst
 		try {
 			if (leafPage == null)
 				return null;
-
-			entry = leafPage.getNext(curRid);
+			if (!didfirst) {
+				entry = leafPage.getCurrent(curRid);
+				didfirst = true;
+			} else {
+				entry = leafPage.getNext(curRid);
+			}
 
 			while (entry == null) {
 				nextpage = leafPage.getNextPage();
@@ -68,13 +72,13 @@ public class BTFileScan extends IndexFileScan implements GlobalConst
 
 				entry = leafPage.getFirst(curRid);
 			}
-
 			if (endkey != null) {
-				Minibase.JavabaseBM.unpinPage(leafPage.getCurPage(), false);
-				leafPage = null;
-				return null;
+				if (entry.key.compareTo(endkey) > 0) {
+					Minibase.JavabaseBM.unpinPage(leafPage.getCurPage(), false);
+					leafPage = null;
+					return null;
+				}
 			}
-
 			return entry;
 		} catch (Exception e) {
 			e.printStackTrace();

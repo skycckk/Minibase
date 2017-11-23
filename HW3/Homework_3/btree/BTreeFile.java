@@ -859,24 +859,87 @@ public class BTreeFile extends IndexFile implements GlobalConst
 
 	{
 		BTFileScan scan = new BTFileScan();
+		if (header.get_rootId().pid == INVALID_PAGE) {
+			scan.leafPage = null;
+			return scan;
+		}
 
+		scan.treeFilename = db_filename;
+		scan.endkey = hi_key;
+		scan.didfirst = false;
+		scan.deletedcurrent = false;
+		scan.curRid = new RID();
 		scan.keyType = header.get_keyType();
 		scan.maxKeysize = header.get_maxKeySize();
+		scan.bfile = this;
 
-		HFPage page = new HFPage();
-		Minibase.JavabaseBM.pinPage(header.get_rootId(), page, false);
-		BTSortedPage currentPage = new BTSortedPage(page, header.get_keyType());
-		PageId currentPageId = new PageId();
-		while (currentPage.getType() == 11) {
-			BTIndexPage currentIndexPage = new BTIndexPage(currentPage, header.get_keyType());
-			currentPageId = currentIndexPage.getLeftLink();
-			Minibase.JavabaseBM.unpinPage(currentPage.getCurPage(), false);
-			currentPage = new BTSortedPage(currentPageId, header.get_keyType()); //
+		// Find the start
+		PageId currPageNo = header.get_rootId();
+		BTLeafPage leafPage = null;
+		BTIndexPage indexPage = null;
+		if (currPageNo.pid == INVALID_PAGE) { // no pages in the BTREE
+			scan.leafPage = null;
+			return scan;
 		}
-		scan.leafPage = new BTLeafPage(currentPage, header.get_keyType());
-		scan.curRid = scan.leafPage.firstRecord();
 
+		BTSortedPage sortPage = new BTSortedPage(currPageNo, header.get_keyType());
 
+		// find leaf page
+		PageId prevPageNo = null;
+		KeyEntry currEntry = null;
+		while (sortPage.getType() == BTSortedPage.INDEX) {
+			indexPage = new BTIndexPage(sortPage, header.get_keyType());
+			prevPageNo = indexPage.getPrevPage();
+			currEntry = indexPage.getFirst(scan.curRid);
+			while (currEntry != null && lo_key != null && currEntry.key.compareTo(lo_key) < 0) {
+				prevPageNo = (PageId)(currEntry.getData());
+				currEntry = indexPage.getNext(scan.curRid);
+			}
+			Minibase.JavabaseBM.unpinPage(currPageNo, false);
+
+			currPageNo = prevPageNo;
+			sortPage = new BTSortedPage(currPageNo, header.get_keyType());
+		}
+
+		// get the leaf page
+		leafPage = new BTLeafPage(sortPage, header.get_keyType());
+		PageId nextPageNo = null;
+		currEntry = leafPage.getFirst(scan.curRid);
+		while (currEntry == null) {
+			nextPageNo = leafPage.getNextPage();
+			Minibase.JavabaseBM.unpinPage(currPageNo, false);
+			if (nextPageNo.pid == INVALID_PAGE) {
+				return null;
+			}
+
+			currPageNo = nextPageNo;
+			leafPage = new BTLeafPage(currPageNo, header.get_keyType());
+			currEntry = leafPage.getFirst(scan.curRid);
+		}
+
+		if (lo_key == null) {
+			scan.leafPage = leafPage;
+			return scan;
+		}
+		
+		// if there is lo_key
+		while (currEntry.key.compareTo(lo_key) < 0) {
+			currEntry = leafPage.getNext(scan.curRid);
+			// scan on right
+			while (currEntry == null) {
+				nextPageNo = leafPage.getNextPage();
+				Minibase.JavabaseBM.unpinPage(currPageNo, false);
+				if (nextPageNo.pid == INVALID_PAGE) {
+					return null;
+				}
+
+				currPageNo = nextPageNo;
+				leafPage = new BTLeafPage(currPageNo, header.get_keyType());
+				currEntry = leafPage.getFirst(scan.curRid);
+			}
+		}
+
+		scan.leafPage = leafPage;
 		return scan;
 	}
 

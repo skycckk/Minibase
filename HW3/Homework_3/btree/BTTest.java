@@ -1,12 +1,23 @@
 package btree;
 
 import exceptions.AddFileEntryException;
+import exceptions.BufMgrException;
+import exceptions.BufferPoolExceededException;
 import exceptions.ConstructPageException;
 import exceptions.GetFileEntryException;
 import exceptions.HashEntryNotFoundException;
+import exceptions.HashOperationException;
 import exceptions.InvalidFrameNumberException;
+import exceptions.IteratorException;
+import exceptions.KeyNotMatchException;
+import exceptions.PageNotReadException;
+import exceptions.PagePinnedException;
 import exceptions.PageUnpinnedException;
+import exceptions.PinPageException;
 import exceptions.ReplacerException;
+import exceptions.ScanDeleteException;
+import exceptions.ScanIteratorException;
+import exceptions.UnpinPageException;
 import global.AttrType;
 import global.GlobalConst;
 import global.Minibase;
@@ -85,20 +96,37 @@ public class BTTest extends TestDriver implements GlobalConst
 	 * "i<integer>" - insert an integer value into the index
 	 * "d<integer>" - delete an integer key from the index
 	 * "p" - print the current state of the tree
+	 * @throws IOException 
+	 * @throws HashEntryNotFoundException 
+	 * @throws PagePinnedException 
+	 * @throws InvalidFrameNumberException 
+	 * @throws BufMgrException 
+	 * @throws PageNotReadException 
+	 * @throws HashOperationException 
+	 * @throws BufferPoolExceededException 
+	 * @throws ReplacerException 
+	 * @throws PageUnpinnedException 
+	 * @throws UnpinPageException 
+	 * @throws PinPageException 
+	 * @throws ConstructPageException 
+	 * @throws IteratorException 
+	 * @throws KeyNotMatchException 
+	 * @throws ScanIteratorException 
+	 * @throws ScanDeleteException 
 	 */
-	public boolean test1()
+	public boolean test1() throws KeyNotMatchException, IteratorException, ConstructPageException, PinPageException, UnpinPageException, PageUnpinnedException, ReplacerException, BufferPoolExceededException, HashOperationException, PageNotReadException, BufMgrException, InvalidFrameNumberException, PagePinnedException, HashEntryNotFoundException, IOException, ScanIteratorException, ScanDeleteException
 	{
 		BTreeFile newIndex = null;
 		
 		try
 		{
 			newIndex = new BTreeFile("test",keyType,4,0);
-			BufferedReader br = new BufferedReader(new FileReader("test.txt"));
+			BufferedReader br = new BufferedReader(new FileReader("10keysInsertOnlyNoDups.txt"));
 			String line = null;
 			RID dummy = new RID();
 			while ((line = br.readLine()) != null)
 			{
-				//System.out.println("Processing line: " + line);
+				System.out.println("Processing line: " + line);
 				switch (line.charAt(0))
 				{
 				case 'i':
@@ -127,6 +155,19 @@ public class BTTest extends TestDriver implements GlobalConst
 		//
 		// all done, remove the index
 		//
+		Key lo_key = new Key(2);
+		Key hi_key = new Key(5);
+		KeyEntry next = null;
+		BTFileScan scan = newIndex.new_scan(lo_key, hi_key);
+		while ((next = scan.get_next()) != null) {  
+		    System.out.println(next.key);
+			if (next.key.equals(new Key(2)) || next.key.equals(new Key(3))) {
+			    scan.delete_current();
+			}
+		}
+		
+		// after scan delete_current()
+		newIndex.printBTree();		 
 		
 		try
 		{

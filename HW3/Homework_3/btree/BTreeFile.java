@@ -873,16 +873,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 		scan.maxKeysize = header.get_maxKeySize();
 		scan.bfile = this;
 
-		// Find the start
-		PageId currPageNo = header.get_rootId();
-		BTLeafPage leafPage = null;
-		BTIndexPage indexPage = null;
-		if (currPageNo.pid == INVALID_PAGE) { // no pages in the BTREE
-			scan.leafPage = null;
-			return scan;
-		}
-		
-		// find leaf page
+		// find the start leaf page
 		scan.leafPage = getStartLeaf(lo_key, scan.curRid);
 		return scan;
 	}

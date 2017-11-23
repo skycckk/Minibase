@@ -1,10 +1,8 @@
 package btree;
 
-import exceptions.AddFileEntryException;
 import exceptions.BufMgrException;
 import exceptions.BufferPoolExceededException;
 import exceptions.ConstructPageException;
-import exceptions.GetFileEntryException;
 import exceptions.HashEntryNotFoundException;
 import exceptions.HashOperationException;
 import exceptions.InvalidFrameNumberException;
@@ -21,7 +19,6 @@ import exceptions.UnpinPageException;
 import global.AttrType;
 import global.GlobalConst;
 import global.Minibase;
-import global.PageId;
 import global.RID;
 import global.TestDriver;
 
@@ -29,12 +26,9 @@ import index.Key;
 import index.KeyEntry;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.Random;
 

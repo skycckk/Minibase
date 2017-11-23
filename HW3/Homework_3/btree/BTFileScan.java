@@ -7,8 +7,28 @@
 package btree;
 
 import btree.page.BTLeafPage;
+import exceptions.ConstructPageException;
+import exceptions.DeleteFashionException;
+import exceptions.DeleteRecException;
+import exceptions.FreePageException;
+import exceptions.HashEntryNotFoundException;
+import exceptions.IndexFullDeleteException;
+import exceptions.IndexInsertRecException;
+import exceptions.IndexSearchException;
+import exceptions.InsertRecException;
+import exceptions.InvalidFrameNumberException;
+import exceptions.IteratorException;
+import exceptions.KeyNotMatchException;
+import exceptions.LeafDeleteException;
+import exceptions.LeafRedistributeException;
+import exceptions.PageUnpinnedException;
+import exceptions.PinPageException;
+import exceptions.RecordNotFoundException;
+import exceptions.RedistributeException;
+import exceptions.ReplacerException;
 import exceptions.ScanDeleteException;
 import exceptions.ScanIteratorException;
+import exceptions.UnpinPageException;
 import global.GlobalConst;
 import global.Minibase;
 import global.PageId;
@@ -53,9 +73,10 @@ public class BTFileScan extends IndexFileScan implements GlobalConst
 		try {
 			if (leafPage == null)
 				return null;
-			if (!didfirst) {
+			if ((!deletedcurrent && !didfirst) || (deletedcurrent && didfirst)) {
 				entry = leafPage.getCurrent(curRid);
 				didfirst = true;
+				deletedcurrent = false;
 			} else {
 				entry = leafPage.getNext(curRid);
 			}
@@ -94,6 +115,27 @@ public class BTFileScan extends IndexFileScan implements GlobalConst
 	 */
 	public void delete_current() throws ScanDeleteException
 	{
+		try {
+			entry=leafPage.getCurrent(curRid);
+			Minibase.JavabaseBM.unpinPage(leafPage.getCurPage(), false);
+			bfile.delete(entry.key, (RID)entry.getData());
+			
+			// update current leaf page
+			leafPage = bfile.getStartLeaf(entry.key, curRid);
+			
+		} catch (IteratorException | DeleteFashionException | LeafRedistributeException | 
+				RedistributeException | InsertRecException | KeyNotMatchException | 
+				UnpinPageException | IndexInsertRecException | FreePageException | 
+				RecordNotFoundException | PinPageException | IndexFullDeleteException | 
+				LeafDeleteException | ConstructPageException | DeleteRecException | 
+				IndexSearchException | IOException | ReplacerException | PageUnpinnedException | 
+				HashEntryNotFoundException | InvalidFrameNumberException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}  	    
+	      
+	    deletedcurrent = true;
+	    return;
 	}
 
 	/**
@@ -125,6 +167,9 @@ public class BTFileScan extends IndexFileScan implements GlobalConst
 			exceptions.InvalidFrameNumberException, exceptions.ReplacerException,
 			exceptions.PageUnpinnedException, exceptions.HashEntryNotFoundException
 	{
+		if (leafPage != null) {
+	         Minibase.JavabaseBM.unpinPage(leafPage.getCurPage(), true);
+	     } 
+	     leafPage=null;
 	}
-
 }

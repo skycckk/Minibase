@@ -881,7 +881,22 @@ public class BTreeFile extends IndexFile implements GlobalConst
 			scan.leafPage = null;
 			return scan;
 		}
+		
+		// find leaf page
+		scan.leafPage = getStartLeaf(lo_key, scan.curRid);
+		return scan;
+	}
 
+	public BTLeafPage getStartLeaf(Key key, RID curRid) throws IOException, ConstructPageException, 
+		IteratorException, KeyNotMatchException, ReplacerException, PageUnpinnedException, 
+		HashEntryNotFoundException, InvalidFrameNumberException {
+		PageId currPageNo = header.get_rootId();
+		BTLeafPage leafPage = null;
+		BTIndexPage indexPage = null;
+		if (currPageNo.pid == INVALID_PAGE) { // no pages in the BTREE
+			return null;
+		}
+		
 		BTSortedPage sortPage = new BTSortedPage(currPageNo, header.get_keyType());
 
 		// find leaf page
@@ -890,10 +905,10 @@ public class BTreeFile extends IndexFile implements GlobalConst
 		while (sortPage.getType() == BTSortedPage.INDEX) {
 			indexPage = new BTIndexPage(sortPage, header.get_keyType());
 			prevPageNo = indexPage.getPrevPage();
-			currEntry = indexPage.getFirst(scan.curRid);
-			while (currEntry != null && lo_key != null && currEntry.key.compareTo(lo_key) < 0) {
+			currEntry = indexPage.getFirst(curRid);
+			while (currEntry != null && key != null && currEntry.key.compareTo(key) < 0) {
 				prevPageNo = (PageId)(currEntry.getData());
-				currEntry = indexPage.getNext(scan.curRid);
+				currEntry = indexPage.getNext(curRid);
 			}
 			Minibase.JavabaseBM.unpinPage(currPageNo, false);
 
@@ -904,7 +919,7 @@ public class BTreeFile extends IndexFile implements GlobalConst
 		// get the leaf page
 		leafPage = new BTLeafPage(sortPage, header.get_keyType());
 		PageId nextPageNo = null;
-		currEntry = leafPage.getFirst(scan.curRid);
+		currEntry = leafPage.getFirst(curRid);
 		while (currEntry == null) {
 			nextPageNo = leafPage.getNextPage();
 			Minibase.JavabaseBM.unpinPage(currPageNo, false);
@@ -914,17 +929,16 @@ public class BTreeFile extends IndexFile implements GlobalConst
 
 			currPageNo = nextPageNo;
 			leafPage = new BTLeafPage(currPageNo, header.get_keyType());
-			currEntry = leafPage.getFirst(scan.curRid);
+			currEntry = leafPage.getFirst(curRid);
 		}
 
-		if (lo_key == null) {
-			scan.leafPage = leafPage;
-			return scan;
+		if (key == null) {
+			return leafPage;
 		}
 		
 		// if there is lo_key
-		while (currEntry.key.compareTo(lo_key) < 0) {
-			currEntry = leafPage.getNext(scan.curRid);
+		while (currEntry.key.compareTo(key) < 0) {
+			currEntry = leafPage.getNext(curRid);
 			// scan on right
 			while (currEntry == null) {
 				nextPageNo = leafPage.getNextPage();
@@ -935,14 +949,11 @@ public class BTreeFile extends IndexFile implements GlobalConst
 
 				currPageNo = nextPageNo;
 				leafPage = new BTLeafPage(currPageNo, header.get_keyType());
-				currEntry = leafPage.getFirst(scan.curRid);
+				currEntry = leafPage.getFirst(curRid);
 			}
 		}
-
-		scan.leafPage = leafPage;
-		return scan;
+		return leafPage;
 	}
-
 
 	/**
 	 * For debug. Print the B+ tree structure out
